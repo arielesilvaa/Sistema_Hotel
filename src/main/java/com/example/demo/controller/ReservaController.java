@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.model.Reserva;
 import com.example.demo.enums.TipoPagamento;
 import com.example.demo.service.ReservaService;
+import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class ReservaController {
 
     // Criar reserva
     @PostMapping
-    public ResponseEntity<Reserva> criarReserva(@RequestBody CriarReservaRequest body) {
+    public ResponseEntity<Reserva> criarReserva(@Valid @RequestBody CriarReservaRequest body) {
         Reserva criada = reservaService.criarReserva(
                 body.getClienteId(),
                 body.getQuartoId(),
