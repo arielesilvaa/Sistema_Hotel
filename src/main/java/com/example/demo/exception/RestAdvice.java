@@ -12,38 +12,40 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class RestAdvice {
+
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<?> notFound(NotFoundException e) {
+    public ResponseEntity<String> notFound(NotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
     @ExceptionHandler({
-    InvalidDataException.class,
+            InvalidDataException.class,
             CancelamentoNaoPermitidoException.class,
             QuartoOcupadoException.class,
-            ReservaSobrepostaClienteException.class
+            ReservaSobrepostaClienteException.class,
     })
-    public ResponseEntity<?> businessError(RuntimeException e) {
+    public ResponseEntity<String> businessError(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
-    public  ResponseEntity<?> serverError(Exception e) {
+    public  ResponseEntity<String> serverError(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro inesperado: " + e.getMessage());
     }
-
-    ///  add aqui
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+
+        // ✅ CORRIGIDO: Removemos os parênteses em 'error'
+        ex.getBindingResult().getAllErrors().forEach(error -> {
             // Captura o nome do campo que falhou na validação
             String fieldName = ((FieldError) error).getField();
             // Captura a mensagem de erro (ex: "Nome é obrigatório")
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
+
         // Retorna 400 Bad Request com a lista de erros por campo
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }

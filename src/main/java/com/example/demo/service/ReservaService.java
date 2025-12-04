@@ -15,6 +15,8 @@ import com.example.demo.repository.QuartoRepository;
 import com.example.demo.repository.ReservaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,6 +27,8 @@ import java.util.List;
 @Service
 @Transactional
 public class ReservaService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReservaService.class);
 
     private final ReservaRepository reservaRepository;
     private final ClienteRepository clienteRepository;
@@ -57,6 +61,7 @@ public class ReservaService {
 
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new NotFoundException("Cliente não encontrado: " + clienteId));
+
         Quarto quarto = quartoRepository.findById(quartoId)
                 .orElseThrow(() -> new NotFoundException("Quarto não encontrado: " + quartoId));
 
@@ -98,17 +103,16 @@ public class ReservaService {
         reserva.setValorTotal(valorTotal);
         reserva.setStatus(StatusReserva.ABERTA);
 
-        Reserva salva = reservaRepository.save(reserva);
+        Reserva reservaSalva = reservaRepository.save(reserva);
 
         // Envia email (simulado)
         try {
-            emailService.enviarEmailReserva(salva);
+            emailService.enviarEmailReserva(reservaSalva);
         } catch (Exception e) {
-            // log e não interrompe criação — você pode guardar um flag se quiser
-            System.err.println("Falha ao enviar e-mail (simulado): " + e.getMessage());
+            logger.error("Falha ao enviar e-mail (simulado) para reserva {}: {}", reservaSalva.getId(), e.getMessage());
         }
 
-        return salva;
+        return reservaSalva;
     }
 
     public Reserva buscarPorId(Long id) {
@@ -139,8 +143,7 @@ public class ReservaService {
         }
 
         reserva.setStatus(StatusReserva.CANCELADA);
-        Reserva salva = reservaRepository.save(reserva);
-        return salva;
+        return reservaRepository.save(reserva);
     }
 
     public Reserva realizarCheckin(Long reservaId) {
@@ -150,12 +153,8 @@ public class ReservaService {
             throw new InvalidDataException("Somente reservas com status ABERTA podem fazer checkin.");
         }
 
-        // opcional: permitir checkin apenas no dia do checkin ou depois?
-        // Aqui permitimos checkin se data atual estiver entre checkin e checkout (inclusive)
         LocalDate hoje = LocalDate.now();
         if (hoje.isBefore(reserva.getDataCheckin()) || hoje.isAfter(reserva.getDataCheckout().minusDays(1))) {
-            // permitimos somente se estiver no período
-            // se preferir mudar a regra, ajuste aqui
             throw new InvalidDataException("Checkin só permitido no período da reserva.");
         }
 
@@ -176,7 +175,8 @@ public class ReservaService {
         return reservaRepository.save(reserva);
     }
 
-    // Método para job agendado que marca EXPIRADA (pode ser chamado por um scheduler)
+    // OS MÉTODOS ABAIXO ERAM USADOS PARA EXPIRAÇÃO MANUAL E ESTAVAM AQUI ANTES DO JOB
+
     public List<Reserva> encontrarReservasExpiradas() {
         LocalDate hoje = LocalDate.now();
         return reservaRepository.findExpiredReservations(StatusReserva.ABERTA, hoje);

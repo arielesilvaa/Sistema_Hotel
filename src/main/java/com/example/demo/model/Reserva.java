@@ -5,6 +5,11 @@ import com.example.demo.enums.TipoPagamento;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.persistence.FetchType;
+import lombok.Getter; // ✅ Adicionado
+import lombok.Setter; // ✅ Adicionado
+import lombok.NoArgsConstructor; // ✅ Adicionado (para JPA)
+import lombok.AllArgsConstructor; // ✅ Adicionado (para o construtor de 8 parâmetros)
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,14 +18,18 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "reservas")
+@Getter // ✅ Substitui todos os getters
+@Setter // ✅ Substitui todos os setters
+@NoArgsConstructor // ✅ Gera o construtor vazio (necessário para JPA)
+@AllArgsConstructor // ✅ Gera o construtor com todos os 8 campos (resolve o alerta)
 public class Reserva extends BaseEntity {
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "cliente_id", nullable = false)
     @JsonIgnore // evita serializar cliente inteiro automaticamente
     private Cliente cliente;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "quarto_id", nullable = false)
     @JsonIgnore
     private Quarto quarto;
@@ -51,53 +60,9 @@ public class Reserva extends BaseEntity {
     private LocalDateTime dataHoraEntrada;
     private LocalDateTime dataHoraFinalizacao;
 
-    public Reserva() {}
+    // Construtor vazio e o construtor de 8 parâmetros foram removidos
+    // e são gerados pelas anotações @NoArgsConstructor e @AllArgsConstructor
 
-    public Reserva(Cliente cliente, Quarto quarto,
-                   LocalDate dataCheckin, LocalDate dataCheckout,
-                   BigDecimal valorDiaria, BigDecimal valorTaxaServico,
-                   TipoPagamento tipoPagamento, BigDecimal valorTotal) {
-        this.cliente = cliente;
-        this.quarto = quarto;
-        this.dataCheckin = dataCheckin;
-        this.dataCheckout = dataCheckout;
-        this.valorDiaria = valorDiaria;
-        this.valorTaxaServico = valorTaxaServico;
-        this.tipoPagamento = tipoPagamento;
-        this.valorTotal = valorTotal;
-    }
-
-    // getters e setters (apenas alguns mostrados; gere o resto se quiser)
-    public Cliente getCliente() { return cliente; }
-    public void setCliente(Cliente cliente) { this.cliente = cliente; }
-
-    public Quarto getQuarto() { return quarto; }
-    public void setQuarto(Quarto quarto) { this.quarto = quarto; }
-
-    public LocalDate getDataCheckin() { return dataCheckin; }
-    public void setDataCheckin(LocalDate dataCheckin) { this.dataCheckin = dataCheckin; }
-
-    public LocalDate getDataCheckout() { return dataCheckout; }
-    public void setDataCheckout(LocalDate dataCheckout) { this.dataCheckout = dataCheckout; }
-
-    public BigDecimal getValorDiaria() { return valorDiaria; }
-    public void setValorDiaria(BigDecimal valorDiaria) { this.valorDiaria = valorDiaria; }
-
-    public BigDecimal getValorTaxaServico() { return valorTaxaServico; }
-    public void setValorTaxaServico(BigDecimal valorTaxaServico) { this.valorTaxaServico = valorTaxaServico; }
-
-    public TipoPagamento getTipoPagamento() { return tipoPagamento; }
-    public void setTipoPagamento(TipoPagamento tipoPagamento) { this.tipoPagamento = tipoPagamento; }
-
-    public BigDecimal getValorTotal() { return valorTotal; }
-    public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
-
-    public StatusReserva getStatus() { return status; }
-    public void setStatus(StatusReserva status) { this.status = status; }
-
-    public LocalDateTime getDataHoraEntrada() { return dataHoraEntrada; }
-    public void setDataHoraEntrada(LocalDateTime dataHoraEntrada) { this.dataHoraEntrada = dataHoraEntrada; }
-
-    public LocalDateTime getDataHoraFinalizacao() { return dataHoraFinalizacao; }
-    public void setDataHoraFinalizacao(LocalDateTime dataHoraFinalizacao) { this.dataHoraFinalizacao = dataHoraFinalizacao; }
+    // Todos os getters e setters (que estavam aqui) foram removidos e
+    // são gerados pelas anotações @Getter e @Setter.
 }

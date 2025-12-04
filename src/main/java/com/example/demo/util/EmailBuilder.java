@@ -4,10 +4,15 @@ import com.example.demo.model.Reserva;
 
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 public final class EmailBuilder {
+
+    // ✅ CORRIGIDO: Usando forLanguageTag, que é a forma moderna e evita o alerta do Sonar.
+    private static final Locale BRAZIL_LOCALE = Locale.forLanguageTag("pt-BR");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private EmailBuilder() {}
 
@@ -18,19 +23,19 @@ public final class EmailBuilder {
     public static String buildReservaEmailBody(Reserva reserva) {
         if (reserva == null) return "";
 
-        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+        // Usamos a constante estática.
+        NumberFormat nf = NumberFormat.getCurrencyInstance(BRAZIL_LOCALE);
         nf.setRoundingMode(RoundingMode.HALF_UP);
 
         StringBuilder sb = new StringBuilder();
         sb.append("Olá ").append(reserva.getCliente() != null ? reserva.getCliente().getNome() : "Hóspede").append(",\n\n");
         sb.append("Sua reserva foi criada com sucesso. Seguem os detalhes:\n\n");
 
-        sb.append("Check-in: ").append(reserva.getDataCheckin() != null ? reserva.getDataCheckin().format(dateFmt) : "N/A").append("\n");
-        sb.append("Check-out: ").append(reserva.getDataCheckout() != null ? reserva.getDataCheckout().format(dateFmt) : "N/A").append("\n");
+        sb.append("Check-in: ").append(reserva.getDataCheckin() != null ? reserva.getDataCheckin().format(DATE_FORMATTER) : "N/A").append("\n");
+        sb.append("Check-out: ").append(reserva.getDataCheckout() != null ? reserva.getDataCheckout().format(DATE_FORMATTER) : "N/A").append("\n");
 
         long dias = (reserva.getDataCheckin() != null && reserva.getDataCheckout() != null)
-                ? java.time.temporal.ChronoUnit.DAYS.between(reserva.getDataCheckin(), reserva.getDataCheckout())
+                ? ChronoUnit.DAYS.between(reserva.getDataCheckin(), reserva.getDataCheckout())
                 : 0;
         sb.append("Diárias: ").append(dias).append("\n\n");
 
