@@ -1,0 +1,181 @@
+
+✅ Roteiro Oficial de Testes (Postman) – Hotel API
+✔ Base URL:
+
+http://localhost:8080/api
+
+1) Criar clientes
+POST /clientes
+
+{
+  "nome": "João Souza",
+  "email": "joao@email.com",
+  "documento": "123.456.789-00",
+  "telefone": "11999990000"
+}
+
+{
+  "nome": "Maria Oliveira",
+  "email": "maria@exemplo.com",
+  "documento": "987.654.321-00",
+  "telefone": "11988881111"
+}
+
+{
+  "nome": "Carlos Pereira",
+  "email": "carlos@hotel.com",
+  "documento": "111.222.333-44",
+  "telefone": "11977772222"
+}
+
+2) Criar quartos
+POST /quartos
+
+{
+  "numero": "101",
+  "custoDiario": 250.00,
+  "possuiVaranda": true,
+  "ehSuite": false,
+  "numeroCamas": 2
+}
+
+{
+  "numero": "102",
+  "custoDiario": 350.00,
+  "possuiVaranda": false,
+  "ehSuite": true,
+  "numeroCamas": 1
+}
+
+{
+  "numero": "201",
+  "custoDiario": 180.00,
+  "possuiVaranda": false,
+  "ehSuite": false,
+  "numeroCamas": 2
+}
+
+3) Atualizar valor de um quarto
+PATCH /quartos/3/valor
+
+{
+  "novoValor": 200.00
+}
+
+4) Criar reservas
+DEBITO
+POST /reservas
+
+{
+  "clienteId": 1,
+  "quartoId": 1,
+  “dataCheckin": "2025-12-10",
+  "dataCheckout": "2025-12-12",
+  "tipoPagamento": "DEBITO"
+}
+
+CRÉDITO (5% acréscimo)
+POST /reservas
+
+{
+  "clienteId": 2,
+  "quartoId": 2,
+  "dataCheckin": "2025-12-15",
+  "dataCheckout": "2025-12-18",
+  "tipoPagamento": "CREDITO"
+}
+
+
+Criar reserva para o mesmo cliente em outra data
+
+{
+  "clienteId": 1,
+  "quartoId": 1,
+  "dataCheckin": "2025-12-22",
+  "dataCheckout": "2025-12-28",
+  "tipoPagamento": "DEBITO"
+}
+
+5) Criar reserva sobreposta do mesmo cliente (DEVE FALHAR)
+
+{
+  "clienteId": 1,
+  "quartoId": 3,
+  "dataCheckin": "2025-12-11",
+  "dataCheckout": "2025-12-13",
+  "tipoPagamento": "DEBITO"
+}
+
+
+6) Criar reserva para quarto já ocupado (DEVE FALHAR)
+
+{
+  "clienteId": 3,
+  "quartoId": 1,
+  "dataCheckin": "2025-12-10",
+  "dataCheckout": "2025-12-11",
+  "tipoPagamento": "DEBITO"
+}
+
+Datas Inválidas
+
+{
+	"clienteId": 1,
+	"quartoId": 1,
+	"dataCheckin": "2025-12-10",
+	"dataCheckout": "2025-12-10",
+	"tipoPagamento": "DEBITO"
+}
+
+
+
+7) Criar pagamento
+POST /pagamentos/reserva/1
+
+{
+	"tipo": "DEBITO",
+	"valor": 550.00
+}
+
+POST /pagamentos/reserva/2
+
+{
+	"tipo": “CREDITO”,
+	"valor": 1155.00
+}
+
+
+10) Cancelar reserva (válido)
+POST /reservas
+Use uma data próxima
+
+{
+	"clienteId": 3,
+	"quartoId": 3,
+	"dataCheckin": "2025-12-04”,
+	"dataCheckout": "2025-12-05”,
+	"tipoPagamento": "DEBITO"
+}
+
+
+ Cancelar reserva fora do prazo  (invalido)
+POST /reservas/{ID_R4}/cancelar
+
+8) Fazer CHECK-IN
+POST /reservas/1/checkin
+
+9) Fazer CHECK-OUT
+POST /reservas/1/checkout
+
+
+
+12) Listar reservas de um cliente
+GET /reservas/cliente/1
+
+13) Testar RESERVA EXPIRADA
+Exemplo de endpoint se você criou:
+POST /reservas/expirar
+
+{
+  "data": "2025-12-02"
+}
