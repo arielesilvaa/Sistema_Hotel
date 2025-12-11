@@ -7,3 +7,6 @@ public enum StatusReserva {
     CANCELADA,
     EXPIRADA
 }
+
+//enums é um pacote adequado para armazenar, um conjunto fixo e
+// limitado de constantes nomeadas

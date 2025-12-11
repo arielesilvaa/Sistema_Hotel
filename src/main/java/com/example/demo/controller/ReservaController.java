@@ -1,14 +1,12 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Reserva;
-import com.example.demo.enums.TipoPagamento;
 import com.example.demo.service.ReservaService;
+import com.example.demo.dto.ReservaRequestDTO; // Usando DTOs como record
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -21,16 +19,17 @@ public class ReservaController {
         this.reservaService = reservaService;
     }
 
-    // Criar reserva
+    // Criar reserva (Usando ReservaRequestDTO migrado para record)
     @PostMapping
-    public ResponseEntity<Reserva> criarReserva(@Valid @RequestBody CriarReservaRequest body) {
+    public ResponseEntity<Reserva> criarReserva(@Valid @RequestBody ReservaRequestDTO body) { // O body deve ser o record
         Reserva criada = reservaService.criarReserva(
-                body.getClienteId(),
-                body.getQuartoId(),
-                body.getDataCheckin(),
-                body.getDataCheckout(),
-                body.getTipoPagamento()
+                body.clienteId(), // Getters em record são o nome do campo seguido de ()
+                body.quartoId(),
+                body.dataCheckin(),
+                body.dataCheckout(),
+                body.tipoPagamento()
         );
+        // Retornar a Reserva criada para ser convertida em ReservaResponseDTO no seu Controller
         return ResponseEntity.ok(criada);
     }
 
@@ -39,58 +38,31 @@ public class ReservaController {
         return ResponseEntity.ok(reservaService.buscarPorId(id));
     }
 
-    // Listar reservas de um cliente
-    @GetMapping("/cliente/{clienteId}")
+    // Listar reservas de um cliente (Padrão de Filtro por Query Parameter seria a melhoria)
+    // Usando o seu endpoint atual:
+    @GetMapping("/{clienteId}/cliente")
     public ResponseEntity<List<Reserva>> listarDoCliente(@PathVariable Long clienteId) {
         return ResponseEntity.ok(reservaService.listarReservasDoCliente(clienteId));
     }
 
-    // Cancelar reserva
+    // URLs Aninhadas e Semânticas para Ações de Estado:
     @PostMapping("/{id}/cancelar")
     public ResponseEntity<Reserva> cancelar(@PathVariable Long id) {
         Reserva salva = reservaService.cancelarReserva(id);
         return ResponseEntity.ok(salva);
     }
 
-    // Checkin
     @PostMapping("/{id}/checkin")
     public ResponseEntity<Reserva> checkin(@PathVariable Long id) {
         Reserva salva = reservaService.realizarCheckin(id);
         return ResponseEntity.ok(salva);
     }
 
-    // Checkout
     @PostMapping("/{id}/checkout")
     public ResponseEntity<Reserva> checkout(@PathVariable Long id) {
         Reserva salva = reservaService.realizarCheckout(id);
         return ResponseEntity.ok(salva);
     }
 
-    // DTO para criação
-    public static class CriarReservaRequest {
-        private Long clienteId;
-        private Long quartoId;
-
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        private LocalDate dataCheckin;
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        private LocalDate dataCheckout;
-
-        private TipoPagamento tipoPagamento;
-
-        public Long getClienteId() { return clienteId; }
-        public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
-
-        public Long getQuartoId() { return quartoId; }
-        public void setQuartoId(Long quartoId) { this.quartoId = quartoId; }
-
-        public LocalDate getDataCheckin() { return dataCheckin; }
-        public void setDataCheckin(LocalDate dataCheckin) { this.dataCheckin = dataCheckin; }
-
-        public LocalDate getDataCheckout() { return dataCheckout; }
-        public void setDataCheckout(LocalDate dataCheckout) { this.dataCheckout = dataCheckout; }
-
-        public TipoPagamento getTipoPagamento() { return tipoPagamento; }
-        public void setTipoPagamento(TipoPagamento tipoPagamento) { this.tipoPagamento = tipoPagamento; }
-    }
+    // Nota: O CriarReservaRequest (inner class) foi substituído pelo ReservaRequestDTO (record).
 }

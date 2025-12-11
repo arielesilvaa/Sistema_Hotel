@@ -1,50 +1,50 @@
 package com.example.demo.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "quartos")
+@Entity // Indica que a classe é uma entidade JPA
+@Table(name = "quartos") // Mapeia a entidade para a tabela "quartos"
 public class Quarto extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
-    private String numero;
+    // getters e setters
+    @Setter
+    @Getter
+    @Column(nullable = false, unique = true) // Número do quarto não pode ser nulo e deve ser único
+    private String numero; // Número do quarto (ex: "101", "202A")
 
-    @Column(name="custo_diario", precision = 10, scale = 2, nullable=false)
-    private BigDecimal custoDiario;
+    @Setter
+    @Getter
+    @Column(name="custo_diario", precision = 10, scale = 2, nullable=false) // Custo diário com precisão e escala definidas
+    private BigDecimal custoDiario; // Custo diário do quarto
 
-    @Column(nullable = false)
-    private boolean possuiVaranda;
+    @Setter
+    @Getter
+    @Column(nullable = false) // Indica se o quarto possui varanda
+    private boolean possuiVaranda; // Indica se o quarto possui varanda
 
-    @Column(nullable = false)
-    private boolean ehSuite;
+    @Column(nullable = false) // Indica se o quarto é uma suíte
+    private boolean suite; // Indica se o quarto é uma suíte
 
-    @Column(nullable = false)
-    private int numeroCamas;
+    @Getter
+    @Setter
+    @Column(nullable = false) // Número de camas no quarto
+    private int numeroCamas; // Número de camas no quarto
 
-    public Quarto() {}
+    public Quarto() {} // Construtor padrão
 
-    public Quarto(String numero, BigDecimal custoDiario, boolean possuiVaranda, boolean ehSuite, int numeroCamas) {
+    public Quarto(String numero, BigDecimal custoDiario, boolean possuiVaranda, boolean suite, int numeroCamas) {
         this.numero = numero;
         this.custoDiario = custoDiario;
         this.possuiVaranda = possuiVaranda;
-        this.ehSuite = ehSuite;
+        this.suite = suite;
         this.numeroCamas = numeroCamas;
-    }
+    } // Construtor completo
 
-    // getters e setters
-    public String getNumero() { return numero; }
-    public void setNumero(String numero) { this.numero = numero; }
+    public boolean isEhSuite() { return suite; }
+    public void setEhSuite(boolean suite) { this.suite = suite; }
 
-    public BigDecimal getCustoDiario() { return custoDiario; }
-    public void setCustoDiario(BigDecimal custoDiario) { this.custoDiario = custoDiario; }
-
-    public boolean isPossuiVaranda() { return possuiVaranda; }
-    public void setPossuiVaranda(boolean possuiVaranda) { this.possuiVaranda = possuiVaranda; }
-
-    public boolean isEhSuite() { return ehSuite; }
-    public void setEhSuite(boolean ehSuite) { this.ehSuite = ehSuite; }
-
-    public int getNumeroCamas() { return numeroCamas; }
-    public void setNumeroCamas(int numeroCamas) { this.numeroCamas = numeroCamas; }
 }

@@ -6,15 +6,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@Entity
-@Table(name = "clientes")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Ignora propriedades específicas do Hibernate durante a serialização JSON
+@Entity // Indica que esta classe é uma entidade JPA
+@Table(name = "clientes") // Mapeia a entidade para a tabela "clientes"
 public class Cliente extends BaseEntity {
 
     // getters e setters
-    @Setter
-    @Getter
-    @Column(nullable = false)
+    @Setter // ele seta o valor do atributo
+    @Getter // ele pega o valor do atributo
+    @Column(nullable = false) // Define que a coluna não pode ser nula
     private String nome;
 
     @Setter

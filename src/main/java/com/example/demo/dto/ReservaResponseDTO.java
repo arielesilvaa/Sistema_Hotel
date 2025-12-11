@@ -2,38 +2,44 @@ package com.example.demo.dto;
 
 import com.example.demo.enums.StatusReserva;
 import com.example.demo.enums.TipoPagamento;
-import lombok.AllArgsConstructor; // Gera o construtor com todos os 12 parâmetros
-import lombok.Getter;           // Gera todos os getters
-import lombok.NoArgsConstructor;    // Gera o construtor sem argumentos
-import lombok.Setter;           // Gera todos os setters
-
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// Record de Resposta final com formatação JSON e campos padronizados
+public record ReservaResponseDTO(
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class ReservaResponseDTO {
+        Long id,
+        Long clienteId,
+        Long quartoId,
 
-    private Long id;
-    private Long clienteId;
-    private Long quartoId;
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate dataCheckin,
 
-    private LocalDate dataCheckin;
-    private LocalDate dataCheckout;
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate dataCheckout,
 
-    private BigDecimal valorDiaria;
-    private BigDecimal valorTaxaServico;
-    private BigDecimal valorTotal;
+        BigDecimal valorDiaria,
+        BigDecimal valorTaxaServico,
+        BigDecimal valorTotal,
 
-    private TipoPagamento tipoPagamento;
-    private StatusReserva status;
+        TipoPagamento tipoPagamento,
+        StatusReserva status,
 
-    private LocalDateTime dataHoraEntrada;
-    private LocalDateTime dataHoraFinalizacao;
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime dataHoraEntrada,
 
-    // e o Sonar não irá mais apontar o erro de "muitos parâmetros".
-}
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime dataHoraFinalizacao,
+
+        // Mapeamento dos campos de auditoria: Se a ReservaResponseDTO for construída com campos nomeados assim:
+        @JsonProperty("dataCriacao")
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime createdAt,
+
+        @JsonProperty("dataAtualizacao")
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime updatedAt
+) {}
