@@ -6,45 +6,26 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 
-@Entity // Indica que a classe é uma entidade JPA
-@Table(name = "quartos") // Mapeia a entidade para a tabela "quartos"
+@Entity
+@Table(name = "quartos")
+@Getter
+@Setter
 public class Quarto extends BaseEntity {
 
-    // getters e setters
-    @Setter
-    @Getter
-    @Column(nullable = false, unique = true) // Número do quarto não pode ser nulo e deve ser único
-    private String numero; // Número do quarto (ex: "101", "202A")
+    @Column(unique = true, nullable = false)
+    private String numero;
 
-    @Setter
-    @Getter
-    @Column(name="custo_diario", precision = 10, scale = 2, nullable=false) // Custo diário com precisão e escala definidas
-    private BigDecimal custoDiario; // Custo diário do quarto
+    @Column(name = "custo_diario", nullable = false, precision = 10, scale = 2)
+    private BigDecimal custoDiario;
 
-    @Setter
-    @Getter
-    @Column(nullable = false) // Indica se o quarto possui varanda
-    private boolean possuiVaranda; // Indica se o quarto possui varanda
+    @Column(name = "numero_camas", nullable = false)
+    private Integer numeroCamas; // Alterado para Integer por segurança
 
-    @Column(nullable = false) // Indica se o quarto é uma suíte
-    private boolean suite; // Indica se o quarto é uma suíte
+    // CORREÇÃO: Tipo alterado para 'Boolean' (Wrapper)
+    @Column(name = "possui_varanda", nullable = false)
+    private Boolean possuiVaranda = false; // Valor padrão para segurança
 
-    @Getter
-    @Setter
-    @Column(nullable = false) // Número de camas no quarto
-    private int numeroCamas; // Número de camas no quarto
-
-    public Quarto() {} // Construtor padrão
-
-    public Quarto(String numero, BigDecimal custoDiario, boolean possuiVaranda, boolean suite, int numeroCamas) {
-        this.numero = numero;
-        this.custoDiario = custoDiario;
-        this.possuiVaranda = possuiVaranda;
-        this.suite = suite;
-        this.numeroCamas = numeroCamas;
-    } // Construtor completo
-
-    public boolean isEhSuite() { return suite; }
-    public void setEhSuite(boolean suite) { this.suite = suite; }
-
+    // CORREÇÃO: Tipo alterado para 'Boolean' (Wrapper)
+    @Column(nullable = false)
+    private Boolean suite = false; // Valor padrão para segurança
 }

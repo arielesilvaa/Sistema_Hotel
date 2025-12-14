@@ -33,27 +33,40 @@ public class QuartoService {
     } // Retorna uma lista de todos os quartos
 
     public Quarto atualizar(Long id, Quarto update) {
-        //Recebe o id e valor
-        Quarto q = buscarPorId(id); //Busca o quarto no banco de dados pelo id
-        if (update.getNumero() != null) q.setNumero(update.getNumero()); // Atualização Parcial (String/BigDecimal): Para campos que podem ser nulos (como String ou BigDecimal), verifica se o novo valor foi enviado (!= null). Se sim, atualiza.
-        if (update.getCustoDiario() != null) q.setCustoDiario(update.getCustoDiario()); // Aplicar Regra: Altera apenas o custo diário do objeto.
-        q.setEhSuite(update.isEhSuite()); // Atualização Direta (boolean): Para campos booleanos, atualiza diretamente, pois eles sempre terão um valor (true ou false).
-        q.setNumeroCamas(update.getNumeroCamas()); // Atualização Direta (int): Para campos inteiros, atualiza diretamente, pois eles sempre terão um valor.
-        return quartoRepository.save(q); // Salva as alterações no banco de dados e retorna o quarto atualizado
+        Quarto q = buscarPorId(id);
+
+        if (update.getNumero() != null) {
+            q.setNumero(update.getNumero());
+        }
+
+        if (update.getCustoDiario() != null) {
+            q.setCustoDiario(update.getCustoDiario());
+        }
+
+        if (update.getSuite() != null) { // CORREÇÃO 1: Usar getSuite() para Boolean Wrapper
+            q.setSuite(update.getSuite()); // CORREÇÃO 2: Usar setSuite() para Boolean Wrapper
+        }
+
+        if (update.getNumeroCamas() != null) { // Melhor usar Wrapper Integer e checar null
+            q.setNumeroCamas(update.getNumeroCamas());
+        }
+
+        // Se você tiver um campo possuiVaranda, ele deve seguir a mesma lógica:
+        if (update.getPossuiVaranda() != null) {
+            q.setPossuiVaranda(update.getPossuiVaranda());
+        }
+
+        return quartoRepository.save(q);
     }
 
     public Quarto atualizarValor(Long id, BigDecimal novoValor) {
-        Quarto q = buscarPorId(id); //Busca o quarto no banco de dados pelo id
-        q.setCustoDiario(novoValor); //Altera apenas o custo diário do objeto.
-        return quartoRepository.save(q); //Salva as alterações no banco de dados e retorna o quarto atualizado
+        Quarto q = buscarPorId(id);
+        q.setCustoDiario(novoValor);
+        return quartoRepository.save(q);
     } // Atualiza apenas o valor do quarto com o ID fornecido
 
     public void deletar(Long id) {
-        Quarto q = buscarPorId(id); //Busca o quarto no banco de dados pelo id
-        quartoRepository.delete(q); //Deleta o quarto do banco de dados
+        Quarto q = buscarPorId(id);
+        quartoRepository.delete(q);
     } // Deleta um quarto pelo ID
 }
-
-
-
-//Serviço é essencial porque ele lida com a lógica de negócio

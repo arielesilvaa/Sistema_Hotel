@@ -2,27 +2,29 @@ package com.example.demo.dto;
 
 import com.example.demo.enums.TipoPagamento;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
+@Setter
+@Getter
+public class ReservaRequestDTO {
 
-public record ReservaRequestDTO(
+    // Getters e Setters
+    @NotNull(message = "O ID do cliente é obrigatório.")
+    private Long clienteId;
 
-        @NotNull(message = "clienteId é obrigatório")
-        Long clienteId,
+    @NotNull(message = "O ID do quarto é obrigatório.")
+    private Long quartoId;
 
-        @NotNull(message = "quartoId é obrigatório")
-        Long quartoId,
+    @NotNull(message = "A data de check-in é obrigatória.")
+    private LocalDate dataCheckin;
 
-        @NotNull(message = "dataCheckin é obrigatória")
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        LocalDate dataCheckin,
+    @NotNull(message = "A data de check-out é obrigatória.")
+    private LocalDate dataCheckout;
 
-        @NotNull(message = "dataCheckout é obrigatória")
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        LocalDate dataCheckout,
+    @NotNull(message = "O tipo de pagamento é obrigatório.")
+    private TipoPagamento tipoPagamento;
 
-        @NotNull(message = "tipoPagamento é obrigatório")
-        TipoPagamento tipoPagamento
-) {
 }

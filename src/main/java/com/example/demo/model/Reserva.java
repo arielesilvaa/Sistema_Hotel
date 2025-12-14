@@ -2,60 +2,42 @@ package com.example.demo.model;
 
 import com.example.demo.enums.StatusReserva;
 import com.example.demo.enums.TipoPagamento;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.persistence.FetchType;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+@Entity
+@Getter // ESSENCIAL: Garante getCliente(), setStatus(), setDataHoraFinalizacao()
+@Setter // ESSENCIAL
+public class Reserva {
 
-@Entity // Indica que esta classe é uma entidade JPA
-@Table(name = "reservas") // Mapeia a entidade para a tabela "reservas"
-@Getter //  Substitui todos os getters
-@Setter //  Substitui todos os setters
-@NoArgsConstructor //  Gera o construtor vazio (necessário para JPA)
-@AllArgsConstructor // Gera o construtor com todos os 8 campos (resolve o alerta)
-public class Reserva extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER) // Muitas reservas para um cliente, fetch = FetchType.EAGER: fala JPA para carregar o Cliente junto quando buscada a Reserva
-    @JoinColumn(name = "cliente_id", nullable = false) // Chave estrangeira para a tabela clientes não pode ser nula
-    @JsonIgnore // evita serializar cliente inteiro automaticamente
+    @ManyToOne
+    @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
-    @ManyToOne(fetch = FetchType.EAGER) // Muitas reservas para um quarto,Garante que toda reserva precisa de um quarto e carrega o quarto junto (EAGER).
-    @JoinColumn(name = "quarto_id", nullable = false) // Chave estrangeira para a tabela quartos não pode ser nula
-    @JsonIgnore // evita serializar quarto inteiro automaticamente
+    @ManyToOne
+    @JoinColumn(name = "quarto_id")
     private Quarto quarto;
 
-    @Column(nullable = false) // Data de check-in não pode ser nula
-    private LocalDate dataCheckin; // Data de check-in
+    private LocalDateTime dataCheckin;
+    private LocalDateTime dataCheckout;
 
-    @Column(nullable = false) // Data de check-out não pode ser nula
-    private LocalDate dataCheckout; // Data de check-out
+    @Enumerated(EnumType.STRING)
+    private StatusReserva status;
 
-    @Column(nullable = false) // Valor da diária não pode ser nulo
-    private BigDecimal valorDiaria; // Valor da diária
+    @Enumerated(EnumType.STRING)
+    private TipoPagamento tipoPagamento;
 
-    @Column(nullable = false) // Valor da taxa de serviço não pode ser nulo
-    private BigDecimal valorTaxaServico; // Valor da taxa de serviço
+    private BigDecimal valorDiaria;
+    private BigDecimal valorTotal;
+    private BigDecimal valorTaxaServico;
 
-    @Enumerated(EnumType.STRING) // Armazena o enum como string no banco de dados
-    @Column(nullable = false) // Tipo de pagamento não pode ser nulo
-    private TipoPagamento tipoPagamento; // Tipo de pagamento
-
-    @Column(nullable = false) // Valor total não pode ser nulo
-    private BigDecimal valorTotal; // Valor total da reserva
-
-    @Enumerated(EnumType.STRING) // Armazena o enum como string no banco de dados
-    @Column(nullable = false) // Status da reserva não pode ser nulo
-    private StatusReserva status = StatusReserva.ABERTA; // Status da reserva (padrão: ABERTA)
-
-    private LocalDateTime dataHoraEntrada; // Data e hora de entrada na reserva
-    private LocalDateTime dataHoraFinalizacao; // Data e hora de finalização da reserva
-
+    private LocalDateTime dataHoraEntrada;
+    private LocalDateTime dataHoraFinalizacao;
 }
