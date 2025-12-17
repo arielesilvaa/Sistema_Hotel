@@ -1,5 +1,6 @@
 package com.example.demo.model;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +9,10 @@ import lombok.Setter;
 @Table(name = "clientes")
 @Getter
 @Setter
+
+// CORREÇÃO: Define a ordem desejada dos campos no JSON
+@JsonPropertyOrder({"nome", "telefone", "documento", "email", "id", "impedidoDeReservar", "dataAtualizacao", "dataCriacao", "bloqueado"})
+
 public class Cliente extends BaseEntity {
 
     @Column(nullable = false)

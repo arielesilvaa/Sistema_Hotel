@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.PagamentoRequestDTO;
 import com.example.demo.dto.ReservaRequestDTO;
 import com.example.demo.dto.ReservaResponseDTO;
 import com.example.demo.model.Reserva;
@@ -8,6 +9,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reservas")
@@ -30,11 +34,8 @@ public class ReservaController {
                 dto.getTipoPagamento()
         );
 
-        // CORREÇÃO: Chama o método estático de conversão (agora existente no DTO)
         return ResponseEntity.status(HttpStatus.CREATED).body(ReservaResponseDTO.fromEntity(reservaCriada));
     }
-
-    // ... (Outros métodos usam fromEntity, e agora funcionarão) ...
 
     @GetMapping("/{id}")
     public ResponseEntity<ReservaResponseDTO> buscarReservaPorId(@PathVariable Long id) {
@@ -42,5 +43,42 @@ public class ReservaController {
         return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
     }
 
-    // ... e assim por diante.
+    // NOVO ENDPOINT: SIMULAÇÃO DE PAGAMENTO (Recebe o valor no corpo)
+    @PatchMapping("/{id}/pagar")
+    public ResponseEntity<ReservaResponseDTO> simularPagamento(@PathVariable Long id,
+                                                               @RequestBody @Valid PagamentoRequestDTO dto) {
+        Reserva reserva = reservaService.simularPagamento(id, dto.getValor());
+        return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
+    }
+
+    // CANCELAR RESERVA (MÉTODO HTTP: DELETE)
+    @DeleteMapping("/{id}/cancelar")
+    public ResponseEntity<Void> cancelarReserva(@PathVariable Long id) {
+        reservaService.cancelarReserva(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // CHECK-IN (MÉTODO HTTP: PATCH)
+    @PatchMapping("/{id}/checkin")
+    public ResponseEntity<ReservaResponseDTO> realizarCheckin(@PathVariable Long id) {
+        Reserva reserva = reservaService.realizarCheckin(id);
+        return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
+    }
+
+    // CHECK-OUT (MÉTODO HTTP: PATCH)
+    @PatchMapping("/{id}/checkout")
+    public ResponseEntity<ReservaResponseDTO> realizarCheckout(@PathVariable Long id) {
+        Reserva reserva = reservaService.realizarCheckout(id);
+        return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
+    }
+
+    // ENDPOINT DE BUSCA POR CLIENTE
+    @GetMapping("/{clienteId}/clientes")
+    public ResponseEntity<List<ReservaResponseDTO>> listarReservasPorCliente(@PathVariable Long clienteId) {
+        List<ReservaResponseDTO> dtos = reservaService.buscarReservasPorCliente(clienteId)
+                .stream()
+                .map(ReservaResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
 }

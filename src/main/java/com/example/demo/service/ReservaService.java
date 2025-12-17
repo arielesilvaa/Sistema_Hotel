@@ -1,174 +1,155 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.ReservaRequestDTO; // Adicione o DTO se for usá-lo
-import com.example.demo.enums.*;
+import com.example.demo.enums.StatusReserva;
+import com.example.demo.enums.TipoPagamento;
 import com.example.demo.exception.*;
-import com.example.demo.model.*;
-import com.example.demo.repository.*;
+import com.example.demo.model.Cliente;
+import com.example.demo.model.Quarto;
+import com.example.demo.model.Reserva;
+import com.example.demo.repository.ClienteRepository;
+import com.example.demo.repository.QuartoRepository;
+import com.example.demo.repository.ReservaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
-@Transactional
 public class ReservaService {
-
-    private static final Logger logger = LoggerFactory.getLogger(ReservaService.class);
 
     private final ReservaRepository reservaRepository;
     private final ClienteRepository clienteRepository;
     private final QuartoRepository quartoRepository;
-    private final EmailService emailService;
 
-    // Constantes para regras de negócio
-    private static final BigDecimal TAXA_SERVICO_PERCENT = new BigDecimal("0.10");
-    private static final BigDecimal ACRESCIMO_CREDITO = new BigDecimal("0.05");
-    private static final long HORAS_CANCELAMENTO = 48L;
-    private static final List<StatusReserva> ACTIVE_STATUSES = List.of(StatusReserva.ABERTA, StatusReserva.CHECKIN);
-
-    public ReservaService(ReservaRepository reservaRepository,
-                          ClienteRepository clienteRepository,
-                          QuartoRepository quartoRepository,
-                          EmailService emailService) {
+    public ReservaService(ReservaRepository reservaRepository, ClienteRepository clienteRepository, QuartoRepository quartoRepository) {
         this.reservaRepository = reservaRepository;
         this.clienteRepository = clienteRepository;
         this.quartoRepository = quartoRepository;
-        this.emailService = emailService;
     }
 
-    // Método para ser chamado pelo Controller
-    public Reserva criarReserva(ReservaRequestDTO dto) {
-        return criarReserva(dto.getClienteId(), dto.getQuartoId(), dto.getDataCheckin(),
-                dto.getDataCheckout(), dto.getTipoPagamento());
+    private static final List<StatusReserva> STATUS_ATIVOS = Arrays.asList(StatusReserva.ABERTA, StatusReserva.CHECKIN, StatusReserva.PAGA);
+    private static final BigDecimal TAXA_SERVICO = new BigDecimal("0.10"); // 10%
+    private static final BigDecimal TAXA_CREDITO = new BigDecimal("0.05"); // 5%
+
+    public Reserva buscarPorId(Long id) {
+        return reservaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Reserva não encontrada."));
     }
 
-    /**
-     * Cria uma nova reserva, aplicando todas as regras de negócio e validações.
-     */
+    @Transactional
     public Reserva criarReserva(Long clienteId, Long quartoId, LocalDate dataCheckin, LocalDate dataCheckout, TipoPagamento tipoPagamento) {
 
-        // 1. VALIDAÇÃO DE BLOQUEIO E DATAS
         Cliente cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new NotFoundException("Cliente não encontrado: " + clienteId));
-
-        // Regra de bloqueio por No-Show (utiliza o campo 'bloqueado' do Cliente)
-        if (cliente.isBloqueado()) {
-            throw new ClienteBloqueadoException("Cliente bloqueado. Histórico de 'No-Show' (reserva expirada) impede novas reservas.");
-        }
-
-        // Validação básica de datas
-        if (dataCheckin == null || dataCheckout == null || !dataCheckin.isBefore(dataCheckout)) {
-            throw new InvalidDataException("Datas inválidas: checkin deve ser antes do checkout.");
-        }
-
-        // Não permite reserva no passado (hoje é permitido)
-        if (dataCheckin.isBefore(LocalDate.now())) {
-            throw new InvalidDataException("Data de checkin não pode ser no passado.");
-        }
-
-        // 2. BUSCA DE ENTIDADES
+                .orElseThrow(() -> new NotFoundException("Cliente não encontrado."));
         Quarto quarto = quartoRepository.findById(quartoId)
-                .orElseThrow(() -> new NotFoundException("Quarto não encontrado: " + quartoId));
+                .orElseThrow(() -> new NotFoundException("Quarto não encontrado."));
 
-        // CONVERSÃO DE TIPO (CORREÇÃO CRUCIAL PARA O ERRO 500)
-        // Checkin: no início do dia
-        LocalDateTime checkinDateTime = dataCheckin.atStartOfDay();
-
-        LocalDateTime checkoutDateTime = dataCheckout.atTime(23, 59, 59);
-
-        // 3. VALIDAÇÕES DE CONFLITO (SOBREPOSIÇÃO)
-        // **IMPORTANTE:** Certifique-se de que os métodos do Repository usam LocalDateTime para ambos os parâmetros
-
-        // Verificação de conflitos para o Quarto
-        long conflitosQuarto = reservaRepository.countOverlappingReservationsForQuarto(quartoId, checkinDateTime, checkoutDateTime, ACTIVE_STATUSES);
-        if (conflitosQuarto > 0) {
-            throw new QuartoOcupadoException("Quarto já reservado nesse período.");
+        if (cliente.isBloqueado()) {
+            throw new ClienteBloqueadoException("Cliente bloqueado. Histórico de 'No-Show' impede novas reservas.");
         }
 
-        // Verificação de conflitos para o Cliente
-        long conflitosCliente = reservaRepository.countOverlappingReservationsForCliente(clienteId, checkinDateTime, checkoutDateTime, ACTIVE_STATUSES);
-        if (conflitosCliente > 0) {
-            throw new ReservaSobrepostaClienteException("Cliente já possui reserva em período que se sobrepõe.");
+        if (dataCheckin.isBefore(LocalDate.now())) {
+            throw new InvalidDataException("Data de check-in não pode ser retroativa.");
         }
 
+        if (!dataCheckout.isAfter(dataCheckin)) {
+            throw new InvalidDataException("Data de check-out deve ser posterior à data de check-in.");
+        }
 
-        long nDiarias = ChronoUnit.DAYS.between(dataCheckin, dataCheckout);
-        BigDecimal subtotal = quarto.getCustoDiario().multiply(BigDecimal.valueOf(nDiarias));
+        LocalDateTime checkinDateTime = dataCheckin.atTime(14, 0);
+        LocalDateTime checkoutDateTime = dataCheckout.atTime(12, 0);
 
-        // Taxa de Serviço e Acréscimo... (Lógica existente)
-        BigDecimal valorTaxaServico = subtotal.multiply(TAXA_SERVICO_PERCENT);
-        BigDecimal valorTotal = subtotal.add(valorTaxaServico);
+        if (reservaRepository.countOverlappingReservationsForQuarto(quartoId, checkinDateTime, checkoutDateTime, STATUS_ATIVOS) > 0) {
+            throw new QuartoOcupadoException("O quarto já possui uma reserva ativa para o período selecionado.");
+        }
+        if (reservaRepository.countOverlappingReservationsForCliente(clienteId, checkinDateTime, checkoutDateTime, STATUS_ATIVOS) > 0) {
+            throw new ClienteComReservaAtivaException("O cliente já possui uma reserva ativa ou em andamento para o período selecionado.");
+        }
+
+        long dias = ChronoUnit.DAYS.between(dataCheckin, dataCheckout);
+        BigDecimal valorDiaria = quarto.getCustoDiario();
+        BigDecimal valorSubTotal = valorDiaria.multiply(BigDecimal.valueOf(dias));
+
+        BigDecimal valorTaxaServico = valorSubTotal.multiply(TAXA_SERVICO);
+        BigDecimal valorTotal = valorSubTotal.add(valorTaxaServico);
 
         if (tipoPagamento == TipoPagamento.CREDITO) {
-            valorTotal = valorTotal.add(valorTotal.multiply(ACRESCIMO_CREDITO));
+            BigDecimal taxaCredito = valorTotal.multiply(TAXA_CREDITO);
+            valorTotal = valorTotal.add(taxaCredito);
         }
 
-        // 5. CRIAÇÃO E PERSISTÊNCIA DA RESERVA
+        Reserva novaReserva = new Reserva();
+        novaReserva.setCliente(cliente);
+        novaReserva.setQuarto(quarto);
+        novaReserva.setDataCheckin(checkinDateTime);
+        novaReserva.setDataCheckout(checkoutDateTime);
+        novaReserva.setTipoPagamento(tipoPagamento);
+        novaReserva.setValorDiaria(valorDiaria);
+        novaReserva.setValorTaxaServico(valorTaxaServico);
+        novaReserva.setValorTotal(valorTotal);
+        novaReserva.setStatus(StatusReserva.ABERTA);
 
-        Reserva reserva = new Reserva();
-        reserva.setCliente(cliente);
-        reserva.setQuarto(quarto);
-        reserva.setDataCheckin(checkinDateTime);   // AGORA LocalDateTime
-        reserva.setDataCheckout(checkoutDateTime); // AGORA LocalDateTime (CORRIGIDO)
-        reserva.setValorDiaria(quarto.getCustoDiario());
-        reserva.setValorTaxaServico(valorTaxaServico);
-        reserva.setTipoPagamento(tipoPagamento);
-        reserva.setValorTotal(valorTotal);
-        reserva.setStatus(StatusReserva.ABERTA);
-
-        Reserva reservaSalva = reservaRepository.save(reserva);
-
-        // 6. AÇÃO PÓS-PERSISTÊNCIA (E-mail)
-        try {
-            emailService.enviarEmailReserva(reservaSalva);
-        } catch (Exception e) {
-            logger.error("Falha ao enviar e-mail (simulado) para reserva {}: {}", reservaSalva.getId(), e.getMessage());
-        }
-
-        return reservaSalva;
+        return reservaRepository.save(novaReserva);
     }
 
-    // --- Outros Métodos ---
-
-    public Reserva cancelarReserva(Long reservaId) {
-        Reserva reserva = buscarPorId(reservaId);
-
-        if (reserva.getStatus() != StatusReserva.ABERTA)  {
-            throw new InvalidDataException("Só é possível cancelar reservas com status ABERTA.");
-        }
-
-        LocalDateTime agora = LocalDateTime.now();
-        LocalDateTime checkinDateTime = reserva.getDataCheckin();
-        long horasAntes = ChronoUnit.HOURS.between(agora, checkinDateTime);
-
-        if (horasAntes < HORAS_CANCELAMENTO) {
-            throw new CancelamentoNaoPermitidoException("Cancelamento permitido apenas com mínimo de 48 horas antes do checkin.");
-        }
-
-        reserva.setStatus(StatusReserva.CANCELADA);
-        return reservaRepository.save(reserva);
-    }
-
-    public Reserva realizarCheckin(Long reservaId) {
+    // MÉTODO: SIMULAÇÃO DE PAGAMENTO
+    @Transactional
+    public Reserva simularPagamento(Long reservaId, BigDecimal valorPago) {
         Reserva reserva = buscarPorId(reservaId);
 
         if (reserva.getStatus() != StatusReserva.ABERTA) {
-            throw new InvalidDataException("Somente reservas com status ABERTA podem fazer checkin.");
+            throw new InvalidStatusException("Pagamento só pode ser processado para reservas com status ABERTA.");
         }
 
+        // Simulação de verificação de valor
+        if (valorPago.compareTo(reserva.getValorTotal()) < 0) {
+            throw new InvalidDataException("O valor pago é insuficiente para cobrir o total da reserva.");
+        }
+
+        reserva.setStatus(StatusReserva.PAGA);
+        reserva.setDataHoraPagamento(LocalDateTime.now());
+
+        return reservaRepository.save(reserva);
+    }
+
+    @Transactional
+    public void cancelarReserva(Long id) {
+        Reserva reserva = buscarPorId(id);
+
+        if (reserva.getStatus() != StatusReserva.ABERTA) {
+            throw new InvalidStatusException("Apenas reservas com status ABERTA podem ser canceladas.");
+        }
+
+        LocalDateTime prazoLimite = reserva.getDataCheckin().minusHours(48);
+        if (LocalDateTime.now().isAfter(prazoLimite)) {
+            throw new InvalidDataException("Cancelamento fora do prazo. O prazo máximo é de 48 horas antes do check-in.");
+        }
+
+        reserva.setStatus(StatusReserva.CANCELADA);
+        reservaRepository.save(reserva);
+    }
+
+    @Transactional
+    public Reserva realizarCheckin(Long id) {
+        Reserva reserva = buscarPorId(id);
         LocalDateTime agora = LocalDateTime.now();
 
-        // Checkin permitido se a data/hora atual for maior ou igual ao checkin agendado
-        // E se for antes da data/hora de checkout agendada
-        if (agora.isBefore(reserva.getDataCheckin()) || agora.isAfter(reserva.getDataCheckout())) {
-            throw new InvalidDataException("Checkin só permitido no período da reserva (a partir da data/hora de checkin e antes da data/hora de checkout).");
+        if (reserva.getStatus() != StatusReserva.PAGA) {
+            throw new InvalidStatusException("Check-in só pode ser realizado em reservas com status PAGA.");
+        }
+
+        // Se você está testando Check-in no mesmo dia, após 14:00, esta validação passa.
+        // Se precisar de flexibilidade para teste: COMENTE este bloco.
+        if (agora.isBefore(reserva.getDataCheckin())) {
+            throw new InvalidDataException("Check-in antecipado não permitido.");
+        }
+        if (agora.isAfter(reserva.getDataCheckout())) {
+            throw new InvalidDataException("Check-in não permitido. A data de check-out já foi atingida.");
         }
 
         reserva.setStatus(StatusReserva.CHECKIN);
@@ -176,20 +157,26 @@ public class ReservaService {
         return reservaRepository.save(reserva);
     }
 
-    public Reserva realizarCheckout(Long reservaId) {
-        Reserva reserva = buscarPorId(reservaId);
+    @Transactional
+    public Reserva realizarCheckout(Long id) {
+        Reserva reserva = buscarPorId(id);
 
         if (reserva.getStatus() != StatusReserva.CHECKIN) {
-            throw new InvalidDataException("Somente reservas com status CHECKIN podem fazer checkout.");
+            throw new InvalidStatusException("Check-out só pode ser realizado em reservas com status CHECKIN.");
         }
 
-        reserva.setStatus(StatusReserva.CHECKOUT);
+        reserva.setStatus(StatusReserva.FINALIZADA);
         reserva.setDataHoraFinalizacao(LocalDateTime.now());
         return reservaRepository.save(reserva);
     }
 
-    public Reserva buscarPorId(Long id) {
-        return reservaRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Reserva não encontrada: " + id));
+    public List<Reserva> buscarReservasPorCliente(Long clienteId) {
+        if (!clienteRepository.existsById(clienteId)) {
+            throw new NotFoundException("Cliente não encontrado.");
+        }
+
+        Cliente cliente = clienteRepository.getReferenceById(clienteId);
+
+        return reservaRepository.findByCliente(cliente);
     }
 }

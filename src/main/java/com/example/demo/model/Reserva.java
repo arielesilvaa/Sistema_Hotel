@@ -3,14 +3,14 @@ package com.example.demo.model;
 import com.example.demo.enums.StatusReserva;
 import com.example.demo.enums.TipoPagamento;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
-@Getter // ESSENCIAL: Garante getCliente(), setStatus(), setDataHoraFinalizacao()
-@Setter // ESSENCIAL
+@Getter
+@Setter
 public class Reserva {
 
     @Id
@@ -28,16 +28,21 @@ public class Reserva {
     private LocalDateTime dataCheckin;
     private LocalDateTime dataCheckout;
 
-    @Enumerated(EnumType.STRING)
-    private StatusReserva status;
+    // NOVO CAMPO ADICIONADO: Necessário para o método simularPagamento
+    private LocalDateTime dataHoraPagamento;
+
+    private LocalDateTime dataHoraEntrada;
+    private LocalDateTime dataHoraFinalizacao;
 
     @Enumerated(EnumType.STRING)
     private TipoPagamento tipoPagamento;
 
-    private BigDecimal valorDiaria;
-    private BigDecimal valorTotal;
-    private BigDecimal valorTaxaServico;
+    @Enumerated(EnumType.STRING)
+    private StatusReserva status;
 
-    private LocalDateTime dataHoraEntrada;
-    private LocalDateTime dataHoraFinalizacao;
+    private BigDecimal valorDiaria;
+    private BigDecimal valorTaxaServico;
+    private BigDecimal valorTotal;
+
+    // Construtores, toString (Se estiver usando Lombok, @Getter/@Setter resolvem)
 }
