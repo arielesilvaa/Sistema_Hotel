@@ -1,124 +1,210 @@
+================================================================================
+ROTEIRO DE TESTES COMPLETO – HOTEL API
+================================================================================
 
-✅ Roteiro Oficial de Testes (Postman) – Hotel API
-✔ Base URL:
+✔ Base URL: http://localhost:8080/api
 
-http://localhost:8080/api
+--------------------------------------------------------------------------------
+1. CONFIGURAÇÃO INICIAL: CLIENTES
+--------------------------------------------------------------------------------
 
-1) Criar clientes
-POST /clientes
-
-{
-  "nome": "João Souza",
-  "email": "joao@email.com",
-  "documento": "123.456.789-00",
-  "telefone": "11999990000"
-}
-
-{
-  "nome": "Maria Oliveira",
-  "email": "maria@exemplo.com",
-  "documento": "987.654.321-00",
-  "telefone": "11988881111"
-}
+// CLIENTE 1 (ID=1): Fluxo Principal
+MÉTODO:     POST
+URL:        /clientes
+BODY:
 
 {
-  "nome": "Carlos Pereira",
-  "email": "carlos@hotel.com",
-  "documento": "111.222.333-44",
-  "telefone": "11977772222"
+    "nome": "João Souza",
+    "email": "joao@email.com",
+    "documento": "123.456.789-00",
+    "telefone": "11999990000"
 }
 
-2) Criar quartos
-POST /quartos
+// CLIENTE 2 (ID=2): Crédito
+MÉTODO:     POST
+URL:        /clientes
+BODY:
 
 {
-  "numero": "101",
-  "custoDiario": 250.00,
-  "possuiVaranda": true,
-  "ehSuite": false,
-  "numeroCamas": 2
+    "nome": "Maria Oliveira",
+    "email": "maria@exemplo.com",
+    "documento": "987.654.321-00",
+    "telefone": "11988881111"
 }
+
+// CLIENTE 3 (ID=3): Cancelamento / Expiração (Inicial)
+MÉTODO:     POST
+URL:        /clientes
+BODY:
+{
+    "nome": "Carlos Pereira",
+    "email": "carlos@hotel.com",
+    "documento": "111.222.333-44",
+    "telefone": "11977772222"
+}
+
+--------------------------------------------------------------------------------
+2. CONFIGURAÇÃO INICIAL: QUARTOS
+--------------------------------------------------------------------------------
+
+// QUARTO 1 (ID=1)
+MÉTODO:     POST
+URL:        /quartos
+BODY:
 
 {
-  "numero": "102",
-  "custoDiario": 350.00,
-  "possuiVaranda": false,
-  "ehSuite": true,
-  "numeroCamas": 1
+    "numero": "101",
+    "custoDiario": 250.00,
+    "possuiVaranda": true,
+    "suite": false,
+    "numeroCamas": 2
 }
+
+// QUARTO 2 (ID=2)
+MÉTODO:     POST
+URL:        /quartos
+BODY:
 
 {
-  "numero": "201",
-  "custoDiario": 180.00,
-  "possuiVaranda": false,
-  "ehSuite": false,
-  "numeroCamas": 2
+    "numero": "102",
+    "custoDiario": 350.00,
+    "possuiVaranda": false,
+    "suite": true,
+    "numeroCamas": 1
 }
 
-3) Atualizar valor de um quarto
-PATCH /quartos/3/valor
+// QUARTO 3 (ID=3)
+MÉTODO:     POST
+URL:        /quartos
+BODY:
 
 {
-  "novoValor": 200.00
+    "numero": "201",
+    "custoDiario": 200.00, // Valor já atualizado
+    "possuiVaranda": false,
+    "suite": false,
+    "numeroCamas": 2
 }
 
-4) Criar reservas
-DEBITO
-POST /reservas
+// ATUALIZAR VALOR DE UM QUARTO (ID=3) - OBS: JÁ ESTÁ NO VALOR FINAL, MAS TESTE A REQUISIÇÃO
+MÉTODO:     PATCH
+URL:        /quartos/3/valor
+BODY:
 
 {
-  "clienteId": 1,
-  "quartoId": 1,
-  “dataCheckin": "2025-12-10",
-  "dataCheckout": "2025-12-12",
-  "tipoPagamento": "DEBITO"
+    "novoValor": 200.00
 }
 
-CRÉDITO (5% acréscimo)
-POST /reservas
+// RESULTADO: HTTP 200 OK.
+
+--------------------------------------------------------------------------------
+3. CRIAÇÃO DE RESERVAS BASE
+--------------------------------------------------------------------------------
+
+// RESERVA 1 (ID=1): Fluxo Principal (Futuro)
+MÉTODO:     POST
+URL:        /reservas
+BODY:
 
 {
-  "clienteId": 2,
-  "quartoId": 2,
-  "dataCheckin": "2025-12-15",
-  "dataCheckout": "2025-12-18",
-  "tipoPagamento": "CREDITO"
+    "clienteId": 1,
+    "quartoId": 1,
+    "dataCheckin": "2025-12-23",
+    "dataCheckout": "2025-12-25",
+    "tipoPagamento": "DEBITO"
 }
 
+// STATUS: ABERTA.
 
-Criar reserva para o mesmo cliente em outra data
+// RESERVA 2 (ID=2): Cancelamento Válido (Futuro)
+MÉTODO:     POST
+URL:        /reservas
+BODY:
+{
+    "clienteId": 2,
+    "quartoId": 2,
+    "dataCheckin": "2025-12-19",
+    "dataCheckout": "2025-12-21",
+    "tipoPagamento": "CREDITO"
+}
+// STATUS: ABERTA.
+
+// RESERVA 3 (ID=3): Para Teste de Conflito de Cliente (Futuro)
+MÉTODO:     POST
+URL:        /reservas
+BODY:
+{
+    "clienteId": 1,
+    "quartoId": 3,
+    "dataCheckin": "2026-01-07",
+    "dataCheckout": "2026-01-09",
+    "tipoPagamento": "DEBITO"
+}
+// STATUS: ABERTA.
+
+// RESERVA 4 (ID=4): Para Teste de Cancelamento Fora do Prazo (Próximo)
+MÉTODO:     POST
+URL:        /reservas
+BODY:
+{
+    "clienteId": 3,
+    "quartoId": 3,
+    "dataCheckin": "2025-12-17",
+    "dataCheckout": "2025-12-18",
+    "tipoPagamento": "DEBITO"
+}
+// STATUS: ABERTA.
+
+// RESERVA 5 (ID=5): PARA TESTE DE EXPIRAÇÃO (NO-SHOW) - Use a data de HOJE
+MÉTODO:     POST
+URL:        /reservas
+BODY:
+{
+    "clienteId": 3,
+    "quartoId": 2,
+    "dataCheckin": "2025-12-16", // Data de Hoje
+    "dataCheckout": "2025-12-18",
+    "tipoPagamento": "DEBITO"
+}
+
+// STATUS: ABERTA.
+
+--------------------------------------------------------------------------------
+4. TESTES DE VALIDAÇÃO (DEVE FALHAR - HTTP 400)
+--------------------------------------------------------------------------------
+
+// 4.1 RESERVA SOBREPOSTA DO MESMO CLIENTE (CONFLITO COM R3)
+MÉTODO:     POST
+URL:        /reservas
+BODY:
 
 {
-  "clienteId": 1,
-  "quartoId": 1,
-  "dataCheckin": "2025-12-22",
-  "dataCheckout": "2025-12-28",
-  "tipoPagamento": "DEBITO"
+    "clienteId": 1,
+    "quartoId": 3,
+    "dataCheckin": "2026-01-08",
+    "dataCheckout": "2026-01-10",
+    "tipoPagamento": "DEBITO"
 }
 
-5) Criar reserva sobreposta do mesmo cliente (DEVE FALHAR)
+// RESULTADO ESPERADO: HTTP 400 (ClienteComReservaAtivaException)
 
+// 4.2 RESERVA PARA QUARTO JÁ OCUPADO (CONFLITO COM R3)
+MÉTODO:     POST
+URL:        /reservas
+BODY:
 {
-  "clienteId": 1,
-  "quartoId": 3,
-  "dataCheckin": "2025-12-11",
-  "dataCheckout": "2025-12-13",
-  "tipoPagamento": "DEBITO"
+    "clienteId": 2,
+    "quartoId": 3,
+    "dataCheckin": "2026-01-06",
+    "dataCheckout": "2026-01-08",
+    "tipoPagamento": "DEBITO"
 }
+// RESULTADO ESPERADO: HTTP 400 (QuartoOcupadoException)
 
-
-6) Criar reserva para quarto já ocupado (DEVE FALHAR)
-
-{
-  "clienteId": 3,
-  "quartoId": 1,
-  "dataCheckin": "2025-12-10",
-  "dataCheckout": "2025-12-11",
-  "tipoPagamento": "DEBITO"
-}
-
-Datas Inválidas
-
+// 4.3 DATAS INVÁLIDAS
+MÉTODO:     POST
+URL:        /reservas
+BODY:
 {
 	"clienteId": 1,
 	"quartoId": 1,
@@ -126,56 +212,97 @@ Datas Inválidas
 	"dataCheckout": "2025-12-10",
 	"tipoPagamento": "DEBITO"
 }
+// RESULTADO ESPERADO: HTTP 400 (InvalidDataException)
 
+--------------------------------------------------------------------------------
+5. FLUXO PRINCIPAL: PAGAR, CHECK-IN, CHECK-OUT (USANDO R1)
+--------------------------------------------------------------------------------
 
-
-7) Criar pagamento
-POST /pagamentos/reserva/1
-
+// 5.1 SIMULAR PAGAMENTO (R1)
+MÉTODO:     PATCH
+URL:        /reservas/1/pagar
+BODY:
 {
-	"tipo": "DEBITO",
-	"valor": 550.00
-}
-
-POST /pagamentos/reserva/2
-
-{
-	"tipo": “CREDITO”,
 	"valor": 1155.00
 }
+// RESULTADO: HTTP 200 OK. STATUS: PAGA.
 
+// 5.2 REALIZAR CHECK-IN (R1) - OBS: Deve ser executado após as 14:00 da data Check-in
+MÉTODO:     PATCH
+URL:        /reservas/1/checkin
+BODY:       (Vazio)
+// RESULTADO: HTTP 200 OK. STATUS: CHECKIN.
 
-10) Cancelar reserva (válido)
-POST /reservas
-Use uma data próxima
+// 5.3 REALIZAR CHECK-OUT (R1)
+MÉTODO:     PATCH
+URL:        /reservas/1/checkout
+BODY:       (Vazio)
+// RESULTADO: HTTP 200 OK. STATUS: FINALIZADA.
 
+--------------------------------------------------------------------------------
+6. TESTE DE CANCELAMENTO
+--------------------------------------------------------------------------------
+
+// 6.1 CANCELAR RESERVA VÁLIDA (R2)
+MÉTODO:     DELETE
+URL:        /reservas/2/cancelar
+BODY:       (Vazio)
+// RESULTADO: HTTP 204 No Content. STATUS R2: CANCELADA.
+
+// 6.2 CANCELAR RESERVA FORA DO PRAZO (R4)
+MÉTODO:     DELETE
+URL:        /reservas/4/cancelar
+BODY:       (Vazio)
+// RESULTADO ESPERADO: HTTP 400 Bad Request (InvalidDataException)
+
+--------------------------------------------------------------------------------
+7. DESAFIO: TESTE DE EXPIRAÇÃO (NO-SHOW E BLOQUEIO)
+--------------------------------------------------------------------------------
+
+// *PRÉ-REQUISITO*: O Scheduler deve estar ajustado para 'minusMinutes(1)' temporariamente.
+// *PRÉ-REQUISITO*: A Reserva 5 deve ter sido criada no passo 3.
+
+// 7.1 AGUARDAR O TEMPO DE CORTE
+// Ação: Espere 1 minuto (60 segundos) após a criação da Reserva 5.
+
+// 7.2 FORÇAR EXPIRAÇÃO (DISPARAR SCHEDULER MANUALMENTE)
+MÉTODO:     PATCH
+URL:        /reservas/test/expirar
+BODY:       (Vazio)
+// RESULTADO: HTTP 200 OK. Verifique os logs para 'Reserva ID 5 expirada'.
+
+// 7.3 VERIFICAR STATUS DA RESERVA 5
+MÉTODO:     GET
+URL:        /reservas/5
+// RESULTADO ESPERADO: STATUS: EXPIRADA.
+
+// 7.4 VERIFICAR BLOQUEIO DO CLIENTE 3
+MÉTODO:     GET
+URL:        /clientes/3
+// RESULTADO ESPERADO: Campo 'bloqueado' deve ser TRUE.
+
+// 7.5 TESTE: TENTAR NOVA RESERVA COM CLIENTE BLOQUEADO (DEVE FALHAR)
+MÉTODO:     POST
+URL:        /reservas
+BODY:
 {
-	"clienteId": 3,
-	"quartoId": 3,
-	"dataCheckin": "2025-12-04”,
-	"dataCheckout": "2025-12-05”,
-	"tipoPagamento": "DEBITO"
+    "clienteId": 3,
+    "quartoId": 1,
+    "dataCheckin": "2026-03-01",
+    "dataCheckout": "2026-03-05",
+    "tipoPagamento": "DEBITO"
 }
+// RESULTADO ESPERADO: HTTP 400 Bad Request (ClienteBloqueadoException).
 
+--------------------------------------------------------------------------------
+8. BUSCAS
+--------------------------------------------------------------------------------
 
- Cancelar reserva fora do prazo  (invalido)
-POST /reservas/{ID_R4}/cancelar
+// 8.1 LISTAR RESERVAS DO CLIENTE 1
+MÉTODO:     GET
+URL:        /reservas/1/clientes
+// RESULTADO: HTTP 200 OK. Deve listar R1 (FINALIZADA) e R3 (ABERTA).
 
-8) Fazer CHECK-IN
-POST /reservas/1/checkin
-
-9) Fazer CHECK-OUT
-POST /reservas/1/checkout
-
-
-
-12) Listar reservas de um cliente
-GET /reservas/cliente/1
-
-13) Testar RESERVA EXPIRADA
-Exemplo de endpoint se você criou:
-POST /reservas/expirar
-
-{
-  "data": "2025-12-02"
-}
+================================================================================
+FIM DO ROTEIRO
+================================================================================
