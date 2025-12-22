@@ -1,52 +1,57 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.APIResponse;
+import com.example.demo.dto.SuccessResponse;
 import com.example.demo.model.Cliente;
 import com.example.demo.service.ClienteService;
+import org.springframework.hateoas.EntityModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-@RestController //fala que classe é um controlador REST, cuida das requisições HTTP
-@RequestMapping("/api/clientes") //mapeia as requisições que começam com /api/clientes para esse controlador
+@RestController
+@RequestMapping("/api/clientes")
 public class ClienteController {
 
-    private final ClienteService clienteService; //dependência do serviço de cliente
+    private final ClienteService clienteService;
 
     public ClienteController(ClienteService clienteService) {
         this.clienteService = clienteService;
-    } //injeção de dependência via construtor
+    }
 
-    @PostMapping //mapeia requisições POST para esse método
-    public ResponseEntity<Cliente> criar(@RequestBody Cliente request) {
+    @PostMapping
+    public ResponseEntity<SuccessResponse<EntityModel<Cliente>>> criar(@RequestBody Cliente request) {
         Cliente criado = clienteService.criar(request);
-        return ResponseEntity.ok(criado);
-    } //o @RequestBody indica que o corpo da requisição será convertido em um objeto Cliente
+        EntityModel<Cliente> resource = EntityModel.of(criado);
 
-    @GetMapping //mapeia requisições GET para esse método
-    public ResponseEntity<List<Cliente>> listar() {
-        return ResponseEntity.ok(clienteService.listarTodos());
-    } //retorna uma lista de todos os clientes
+        resource.add(linkTo(methodOn(ClienteController.class).buscar(criado.getId())).withSelfRel());
+        resource.add(linkTo(methodOn(ClienteController.class).deletar(criado.getId())).withRel("deletar"));
+        resource.add(linkTo(methodOn(ClienteController.class).listar()).withRel("listar_todos"));
 
-    @GetMapping("/{id}") //mapeia requisições GET com um ID específico
-    public ResponseEntity<Cliente> buscar(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.buscarPorId(id));
-    } //o @PathVariable indica que o ID virá da URL
+        return ResponseEntity.status(201).body(new SuccessResponse<>(resource));
+    }
 
-    @PutMapping("/{id}") //mapeia requisições PUT com um ID específico
-    public ResponseEntity<Cliente> atualizar(@PathVariable Long id, @RequestBody Cliente request) {
-        Cliente atualizado = clienteService.atualizar(id, request);
-        return ResponseEntity.ok(atualizado);
-    } //atualiza os dados do cliente com o ID fornecido
+    @GetMapping
+    public ResponseEntity<SuccessResponse<List<Cliente>>> listar() {
+        return ResponseEntity.ok(new SuccessResponse<>(clienteService.listarTodos()));
+    }
 
-    @DeleteMapping("/{id}") //mapeia requisições DELETE com um ID específico
+    @GetMapping("/{id}/clientes")
+    public ResponseEntity<SuccessResponse<Cliente>> buscar(@PathVariable Long id) {
+        return ResponseEntity.ok(new SuccessResponse<>(clienteService.buscarPorId(id)));
+    }
+
+    @PutMapping("/{id}/clientes")
+    public ResponseEntity<SuccessResponse<Cliente>> atualizar(@PathVariable Long id, @RequestBody Cliente request) {
+        return ResponseEntity.ok(new SuccessResponse<>(clienteService.atualizar(id, request)));
+    }
+
+    @DeleteMapping("/{id}/clientes")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         clienteService.deletar(id);
         return ResponseEntity.noContent().build();
-    }//deleta o cliente com o ID fornecido
+    }
 }
-
-
-
-// controller recebe os pedidos (requisições HTTP) de clientes externos
-// e decide qual "setor" (o ClienteService) deve cuidar da tarefa.

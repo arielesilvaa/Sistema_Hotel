@@ -7,13 +7,19 @@ import com.example.demo.repository.ClienteRepository;
 import com.example.demo.repository.ReservaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Component
+// CORREÇÃO DAS IMPORTAÇÕES: Use apenas SLF4J
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Component // Indica que esta classe é um componente gerenciado pelo Spring
 public class ReservaScheduler {
+
+    // CORREÇÃO DA INICIALIZAÇÃO: Sem o cast (Logger)
+    private static final Logger logger = LoggerFactory.getLogger(ReservaScheduler.class);
 
     private final ReservaRepository reservaRepository;
     private final ClienteRepository clienteRepository;
@@ -23,57 +29,43 @@ public class ReservaScheduler {
         this.clienteRepository = clienteRepository;
     }
 
-    // Agendado para rodar a cada 30 minutos (1800000 ms)
-    @Scheduled(fixedDelay = 1800000)
-    @Transactional
+    @Scheduled(fixedDelay = 30000) // Executa a cada 30 segundos
     public void verificarReservasExpiradas() {
-        System.out.println("--- Executando verificação de reservas expiradas ---");
+        logger.info("--- Executando verificação de reservas expiradas ---");
 
-        // Regra de Corte: Data e hora anterior a 1 minuto atrás.
-        // **IMPORTANTE**: Reverter para minusHours(12) após o teste!
-        LocalDateTime dataHoraCorte = LocalDateTime.now().minusMinutes(1);
-        System.out.println("DEBUG: Hora de Corte (Check-in deve ser anterior a): " + dataHoraCorte);
+        LocalDateTime dataHoraCorte = LocalDateTime.now().minusMinutes(1); // Considera reservas com check-in antes de 1 minuto atrás
+        // O SLF4J usa {} como placeholder para variáveis
+        logger.info("Hora de Corte (Check-in deve ser anterior a): {}", dataHoraCorte);
 
-        // 1. Buscando ABERTAS (Se expirar, bloqueia o cliente)
-        List<Reserva> reservasAbertasParaExpirar = reservaRepository.findByStatusAndDataCheckinBefore(
-                StatusReserva.ABERTA,
+        List<Reserva> reservasParaExpirar = reservaRepository.findByStatusInAndDataCheckinBefore(
+                List.of(StatusReserva.ABERTA),
                 dataHoraCorte
         );
-        System.out.println("DEBUG: Encontradas " + reservasAbertasParaExpirar.size() + " reservas ABERTAS para expirar.");
+        logger.info("Encontradas {} reservas Abertas Para Expirar.", reservasParaExpirar.size());
 
+        expirarReservas(reservasParaExpirar);
+        bloquearClientesNoShow(reservasParaExpirar);
 
-        // 2. Buscando PAGAS (Se expirar, não bloqueia o cliente)
-        List<Reserva> reservasPagasParaExpirar = reservaRepository.findByStatusAndDataCheckinBefore(
-                StatusReserva.PAGA,
-                dataHoraCorte
-        );
-        System.out.println("DEBUG: Encontradas " + reservasPagasParaExpirar.size() + " reservas PAGAS para expirar.");
-
-        // Processamento
-        processarExpiracao(reservasAbertasParaExpirar, true);
-
-        processarExpiracao(reservasPagasParaExpirar, false);
-
-        System.out.println("--- Verificação concluída. ---");
+        logger.info("--- Verificação concluída. ---");
     }
 
-    private void processarExpiracao(List<Reserva> reservas, boolean deveBloquearCliente) {
+    private void expirarReservas(List<Reserva> reservas) {
         for (Reserva reserva : reservas) {
-            System.out.println("--- [AÇÃO] Reserva ID " + reserva.getId() + " expirada (No-Show). Status anterior: " + reserva.getStatus() + " ---");
 
-            // Muda o status da reserva
-            reserva.setStatus(StatusReserva.EXPIRADA);
-            reservaRepository.save(reserva);
-            // Em testes extremos, pode ser necessário um flush: reservaRepository.flush();
+            logger.warn("[AÇÃO] Reserva ID {} expirada (No-Show). Status anterior: {}", reserva.getId(), reserva.getStatus());
+            reserva.setStatus(StatusReserva.EXPIRADA); // Atualiza o status da reserva para EXPIRADA
+            reservaRepository.save(reserva); // Salva a atualização no banco de dados
 
-            if (deveBloquearCliente) {
-                // Bloqueia o cliente (apenas se a reserva era ABERTA)
-                Cliente cliente = reserva.getCliente();
-                if (!cliente.isBloqueado()) {
-                    cliente.setBloqueado(true);
-                    clienteRepository.save(cliente);
-                    System.out.println("Cliente ID " + cliente.getId() + " bloqueado por No-Show.");
-                }
+            }
+        }
+
+        private void bloquearClientesNoShow(List<Reserva> reservas) {
+        for (Reserva reserva : reservas) {
+            Cliente cliente = reserva.getCliente();
+            if (!cliente.isBloqueado()) { // Verifica se o cliente já não está bloqueado
+                cliente.setBloqueado(true); // Bloqueia o cliente
+                clienteRepository.save(cliente); // Salva a atualização no banco de dados
+                logger.warn("Cliente ID {} bloqueado por No-Show na Reserva ID {}.", cliente.getId(), reserva.getId());
             }
         }
     }

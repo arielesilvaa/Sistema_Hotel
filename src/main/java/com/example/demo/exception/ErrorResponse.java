@@ -1,7 +1,10 @@
 package com.example.demo.exception;
 
+import lombok.Getter;
+
 // Você pode usar @Getter e @Setter do Lombok, ou definir manualmente.
 // Definindo manualmente para garantir que não haja dependências de anotações.
+@Getter
 public class ErrorResponse {
 
     private final String message;
@@ -12,11 +15,4 @@ public class ErrorResponse {
         this.status = status;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public int getStatus() {
-        return status;
-    }
 }

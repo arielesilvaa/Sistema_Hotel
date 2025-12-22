@@ -11,8 +11,7 @@ import java.math.BigDecimal;
 @Table(name = "quartos")
 @Getter
 @Setter
-// CORREÇÃO: Define a ordem desejada dos campos no JSON
-@JsonPropertyOrder({"custoDiario", "id", "numero", "numeroCamas", "possuiVaranda", "suite", "dataAtualizacao", "dataCriacao"})
+
 
 public class Quarto extends BaseEntity {
 
@@ -20,7 +19,7 @@ public class Quarto extends BaseEntity {
     private String numero;
 
     @Column(name = "custo_diario", nullable = false, precision = 10, scale = 2)
-    private BigDecimal custoDiario;
+    private BigDecimal custoDiario; //esse
 
     @Column(name = "numero_camas", nullable = false)
     private Integer numeroCamas; // Alterado para Integer por segurança

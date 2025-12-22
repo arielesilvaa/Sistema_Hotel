@@ -8,14 +8,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfiguration implements WebMvcConfigurer {
 
-    @Override
+    @Override // Configurações de CORS
     public void addCorsMappings(CorsRegistry registry) {
         // ESSA LINHA É CRUCIAL: Mapeia para TODAS AS ROTAS (incluindo /api/reservas)
-        registry.addMapping("/**")
+        registry.addMapping("/**") //serve para todas as rotas
                 // Permite requisições da porta padrão do React
                 .allowedOrigins("http://localhost:3000")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Permite todos os métodos HTTP
+                .allowedHeaders("*") // Permite todos os cabeçalhos
+                .allowCredentials(true); // Permite envio de cookies e credenciais
     }
 }

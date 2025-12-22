@@ -1,30 +1,30 @@
 package com.example.demo.dto;
 
 import com.example.demo.enums.TipoPagamento;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
 
-import java.time.LocalDate;
 
-@Setter
-@Getter
-public class ReservaRequestDTO {
+import java.time.LocalDateTime;
+
+public record ReservaRequestDTO (
 
     // Getters e Setters
     @NotNull(message = "O ID do cliente é obrigatório.")
-    private Long clienteId;
+    Long clienteId,
 
     @NotNull(message = "O ID do quarto é obrigatório.")
-    private Long quartoId;
+    Long quartoId,
 
     @NotNull(message = "A data de check-in é obrigatória.")
-    private LocalDate dataCheckin;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    LocalDateTime dataCheckin,
 
     @NotNull(message = "A data de check-out é obrigatória.")
-    private LocalDate dataCheckout;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    LocalDateTime dataCheckout,
 
     @NotNull(message = "O tipo de pagamento é obrigatório.")
-    private TipoPagamento tipoPagamento;
+    TipoPagamento tipoPagamento
 
-}
+) {}

@@ -41,8 +41,8 @@ public class ReservaService {
                 .orElseThrow(() -> new NotFoundException("Reserva não encontrada."));
     }
 
-    @Transactional
-    public Reserva criarReserva(Long clienteId, Long quartoId, LocalDate dataCheckin, LocalDate dataCheckout, TipoPagamento tipoPagamento) {
+    @Transactional // garante que todas as operações dentro do método sejam trat
+    public Reserva criarReserva(Long clienteId, Long quartoId, LocalDateTime dataCheckin, LocalDateTime dataCheckout, TipoPagamento tipoPagamento) {
 
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new NotFoundException("Cliente não encontrado."));
@@ -53,7 +53,7 @@ public class ReservaService {
             throw new ClienteBloqueadoException("Cliente bloqueado. Histórico de 'No-Show' impede novas reservas.");
         }
 
-        if (dataCheckin.isBefore(LocalDate.now())) {
+        if (dataCheckin.isBefore(LocalDateTime.now())) {
             throw new InvalidDataException("Data de check-in não pode ser retroativa.");
         }
 
@@ -61,8 +61,8 @@ public class ReservaService {
             throw new InvalidDataException("Data de check-out deve ser posterior à data de check-in.");
         }
 
-        LocalDateTime checkinDateTime = dataCheckin.atTime(14, 0);
-        LocalDateTime checkoutDateTime = dataCheckout.atTime(12, 0);
+        LocalDateTime checkinDateTime = LocalDateTime.from(dataCheckin);
+        LocalDateTime checkoutDateTime = LocalDateTime.from(dataCheckout);
 
         if (reservaRepository.countOverlappingReservationsForQuarto(quartoId, checkinDateTime, checkoutDateTime, STATUS_ATIVOS) > 0) {
             throw new QuartoOcupadoException("O quarto já possui uma reserva ativa para o período selecionado.");
@@ -97,8 +97,7 @@ public class ReservaService {
         return reservaRepository.save(novaReserva);
     }
 
-    // MÉTODO: SIMULAÇÃO DE PAGAMENTO
-    @Transactional
+
     public Reserva simularPagamento(Long reservaId, BigDecimal valorPago) {
         Reserva reserva = buscarPorId(reservaId);
 
@@ -117,7 +116,6 @@ public class ReservaService {
         return reservaRepository.save(reserva);
     }
 
-    @Transactional
     public void cancelarReserva(Long id) {
         Reserva reserva = buscarPorId(id);
 
@@ -134,7 +132,6 @@ public class ReservaService {
         reservaRepository.save(reserva);
     }
 
-    @Transactional
     public Reserva realizarCheckin(Long id) {
         Reserva reserva = buscarPorId(id);
         LocalDateTime agora = LocalDateTime.now();
@@ -142,22 +139,20 @@ public class ReservaService {
         if (reserva.getStatus() != StatusReserva.PAGA) {
             throw new InvalidStatusException("Check-in só pode ser realizado em reservas com status PAGA.");
         }
-
-        // Se você está testando Check-in no mesmo dia, após 14:00, esta validação passa.
-        // Se precisar de flexibilidade para teste: COMENTE este bloco.
+        // Bloco de validação de datas
+        // Verifica se a data atual está dentro do período permitido para check-in
         if (agora.isBefore(reserva.getDataCheckin())) {
             throw new InvalidDataException("Check-in antecipado não permitido.");
         }
         if (agora.isAfter(reserva.getDataCheckout())) {
             throw new InvalidDataException("Check-in não permitido. A data de check-out já foi atingida.");
-        }
+        } // Fim do bloco de validação
 
         reserva.setStatus(StatusReserva.CHECKIN);
         reserva.setDataHoraEntrada(agora);
         return reservaRepository.save(reserva);
     }
 
-    @Transactional
     public Reserva realizarCheckout(Long id) {
         Reserva reserva = buscarPorId(id);
 

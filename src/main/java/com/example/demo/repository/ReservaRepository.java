@@ -12,18 +12,18 @@ import java.util.List;
 
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
-    // 1. Busca por Cliente (Usado no ReservaService)
+    // 1. Busca por Cliente
     List<Reserva> findByCliente(Cliente cliente);
 
-    // 2. Método para o Scheduler: Busca reservas em status específico cuja data de check-in já passou.
-    // USANDO @Query EXPLÍCITO para contornar problemas de precisão de tempo (Timestamp) com findBy...Before
-    @Query("SELECT r FROM Reserva r WHERE r.status = :status AND r.dataCheckin < :dataLimite")
-    List<Reserva> findByStatusAndDataCheckinBefore(
-            @Param("status") StatusReserva status,
+
+    // 2. MÉTODO ATUALIZADO: Agora usa "IN" e aceita uma List de Status
+    @Query("SELECT r FROM Reserva r WHERE r.status IN :statuses AND r.dataCheckin < :dataLimite")
+    List<Reserva> findByStatusInAndDataCheckinBefore(
+            @Param("statuses") List<StatusReserva> statuses,
             @Param("dataLimite") LocalDateTime dataLimite
     );
 
-    // 3. Validação de Conflito de Datas (Quarto Ocupado)
+    // 3. Validação de Conflito (Quarto)
     @Query("SELECT COUNT(r) FROM Reserva r WHERE r.quarto.id = :quartoId " +
             "AND r.status IN :activeStatuses " +
             "AND ( (r.dataCheckin < :checkout AND r.dataCheckout > :checkin) )")
@@ -32,7 +32,7 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
                                                @Param("checkout") LocalDateTime checkout,
                                                @Param("activeStatuses") List<StatusReserva> activeStatuses);
 
-    // 4. Validação de Conflito de Datas (Cliente com Reserva Ativa)
+    // 4. Validação de Conflito (Cliente)
     @Query("SELECT COUNT(r) FROM Reserva r WHERE r.cliente.id = :clienteId " +
             "AND r.status IN :activeStatuses " +
             "AND ( (r.dataCheckin < :checkout AND r.dataCheckout > :checkin) )")

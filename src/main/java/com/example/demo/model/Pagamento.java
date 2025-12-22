@@ -3,14 +3,19 @@ package com.example.demo.model;
 import com.example.demo.enums.TipoPagamento;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 @Entity // Indica que esta classe é uma entidade JPA
 @Table(name = "pagamentos") // Mapeia a entidade para a tabela "pagamentos"
 public class Pagamento extends BaseEntity {
 
+    // getters e setters
     @ManyToOne(optional = false, fetch = FetchType.LAZY) // Muitos pagamentos para uma reserva
     //optional = false: pagamento sempre tem que ter uma reserva ligada
     //fetch = FetchType.LAZY: Diz ao JPA para não carregar a reserva inteira automaticamente pagamentos Isso economiza memória e tempo.
@@ -36,16 +41,4 @@ public class Pagamento extends BaseEntity {
         this.dataPagamento = dataPagamento;
     } // Construtor completo
 
-    // getters e setters
-    public Reserva getReserva() { return reserva; }
-    public void setReserva(Reserva reserva) { this.reserva = reserva; }
-
-    public TipoPagamento getTipo() { return tipo; }
-    public void setTipo(TipoPagamento tipo) { this.tipo = tipo; }
-
-    public BigDecimal getValorPago() { return valorPago; }
-    public void setValorPago(BigDecimal valorPago) { this.valorPago = valorPago; }
-
-    public LocalDateTime getDataPagamento() { return dataPagamento; }
-    public void setDataPagamento(LocalDateTime dataPagamento) { this.dataPagamento = dataPagamento; }
 }

@@ -14,6 +14,6 @@ public record ErrorResponse(
         String message,
 
         // Timestamp de quando o erro ocorreu
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") // Formato da data no JSON
         LocalDateTime timestamp
 ) {}

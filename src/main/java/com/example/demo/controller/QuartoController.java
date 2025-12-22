@@ -1,65 +1,62 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.APIResponse;
+import com.example.demo.dto.SuccessResponse;
 import com.example.demo.model.Quarto;
 import com.example.demo.service.QuartoService;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.hateoas.EntityModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
-@RestController // Indica que essa classe é um controlador REST
-@RequestMapping("/api/quartos")// Mapeia as requisições que começam com /api/quartos para esse controlador
+@RestController
+@RequestMapping("/api/quartos")
 public class QuartoController {
 
-    private final QuartoService quartoService; // Dependência do serviço de quarto
+    private final QuartoService quartoService;
 
     public QuartoController(QuartoService quartoService) {
         this.quartoService = quartoService;
-    } // Injeção de dependência via construtor
+    }
 
-    @PostMapping // Mapeia requisições POST para esse método
-    public ResponseEntity<Quarto> criarQuarto(@RequestBody Quarto request) {
+    @PostMapping
+    public ResponseEntity<SuccessResponse<EntityModel<Quarto>>> criarQuarto(@RequestBody Quarto request) {
         Quarto criado = quartoService.criar(request);
-        return ResponseEntity.ok(criado);
-    } // O @RequestBody indica que o corpo da requisição será convertido em um objeto Quarto
+        EntityModel<Quarto> resource = EntityModel.of(criado);
 
-    @GetMapping // Mapeia requisições GET para esse método
-    public ResponseEntity<List<Quarto>> listar() {
-        return ResponseEntity.ok(quartoService.listarTodos());
-    } // Retorna uma lista de todos os quartos
+        resource.add(linkTo(methodOn(QuartoController.class).buscar(criado.getId())).withSelfRel());
+        resource.add(linkTo(methodOn(QuartoController.class).atualizarValor(criado.getId(), null)).withRel("alterar_preco"));
 
-    @GetMapping("/{id}") // Mapeia requisições GET com um ID específico
-    public ResponseEntity<Quarto> buscar(@PathVariable Long id) {
-        return ResponseEntity.ok(quartoService.buscarPorId(id));
-    } // O @PathVariable indica que o ID virá da URL
+        return ResponseEntity.status(201).body(new SuccessResponse<>(resource));
+    }
 
-    @PutMapping("/{id}") // Mapeia requisições PUT com um ID específico
-    public ResponseEntity<Quarto> atualizar(@PathVariable Long id, @RequestBody Quarto request) {
-        Quarto atualizado = quartoService.atualizar(id, request);
-        return ResponseEntity.ok(atualizado);
-    } // Atualiza os dados do quarto com o ID fornecido
+    @GetMapping
+    public ResponseEntity<SuccessResponse<List<Quarto>>> listar() {
+        return ResponseEntity.ok(new SuccessResponse<>(quartoService.listarTodos()));
+    }
 
-    // Endpoint específico para atualizar apenas o valor
-    @PatchMapping("/{id}/valor") // Mapeia requisições PATCH para esse método
-    public ResponseEntity<Quarto> atualizarValor(@PathVariable Long id, @RequestBody ValorRequest body) {
-        Quarto atualizado = quartoService.atualizarValor(id, body.getNovoValor());
-        return ResponseEntity.ok(atualizado);
-    } // Atualiza apenas o valor do quarto com o ID fornecido
+    @GetMapping("/{id}/quartos")
+    public ResponseEntity<SuccessResponse<Quarto>> buscar(@PathVariable Long id) {
+        return ResponseEntity.ok(new SuccessResponse<>(quartoService.buscarPorId(id)));
+    }
 
-    @DeleteMapping("/{id}") // Mapeia requisições DELETE com um ID específico
+    @PatchMapping("/{id}/valores")
+    public ResponseEntity<SuccessResponse<Quarto>> atualizarValor(@PathVariable Long id, @RequestBody ValorRequest body) {
+        return ResponseEntity.ok(new SuccessResponse<>(quartoService.atualizarValor(id, body.getNovoValor())));
+    }
+
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         quartoService.deletar(id);
         return ResponseEntity.noContent().build();
-    } // Deleta o quarto com o ID fornecido
-
-    // DTO é uma classe simples usada para transferir dados
-    @Setter
-    @Getter
-    public static class ValorRequest {
-        private BigDecimal novoValor;
-
     }
+
+    @Setter @Getter
+    public static class ValorRequest { private BigDecimal novoValor; }
 }

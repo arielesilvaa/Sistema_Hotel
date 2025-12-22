@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service // Indica que esta classe é um serviço do Spring
-@Transactional // Garante que as operações do banco de dados sejam transacionais ou salva tudo ou nada
+
 public class QuartoService {
 
     private final QuartoRepository quartoRepository; // Dependência do repositório de quartos

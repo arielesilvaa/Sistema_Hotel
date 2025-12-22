@@ -1,17 +1,16 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.PagamentoRequestDTO;
-import com.example.demo.dto.ReservaRequestDTO;
-import com.example.demo.dto.ReservaResponseDTO;
+import com.example.demo.dto.*;
 import com.example.demo.model.Reserva;
 import com.example.demo.service.ReservaService;
 import jakarta.validation.Valid;
+import org.springframework.hateoas.EntityModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reservas")
@@ -24,61 +23,62 @@ public class ReservaController {
     }
 
     @PostMapping
-    public ResponseEntity<ReservaResponseDTO> criarReserva(@RequestBody @Valid ReservaRequestDTO dto) {
-
+    public ResponseEntity<SuccessResponse<EntityModel<ReservaResponseDTO>>> criarReserva(@RequestBody @Valid ReservaRequestDTO dto) {
         Reserva reservaCriada = reservaService.criarReserva(
-                dto.getClienteId(),
-                dto.getQuartoId(),
-                dto.getDataCheckin(),
-                dto.getDataCheckout(),
-                dto.getTipoPagamento()
+                dto.clienteId(),
+                dto.quartoId(),
+                dto.dataCheckin(),
+                dto.dataCheckout(),
+                dto.tipoPagamento()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ReservaResponseDTO.fromEntity(reservaCriada));
+        ReservaResponseDTO responseDTO = ReservaResponseDTO.fromEntity(reservaCriada);
+        EntityModel<ReservaResponseDTO> resource = EntityModel.of(responseDTO);
+
+        resource.add(linkTo(methodOn(ReservaController.class).buscarReservaPorId(reservaCriada.getId())).withSelfRel());
+        resource.add(linkTo(methodOn(ReservaController.class).simularPagamento(reservaCriada.getId(), null)).withRel("pagar"));
+        resource.add(linkTo(methodOn(ReservaController.class).cancelarReserva(reservaCriada.getId())).withRel("cancelar"));
+
+        // Retorna APENAS o campo "data" no JSON de sucesso
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResponse<>(resource));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReservaResponseDTO> buscarReservaPorId(@PathVariable Long id) {
+    public ResponseEntity<SuccessResponse<ReservaResponseDTO>> buscarReservaPorId(@PathVariable Long id) {
         Reserva reserva = reservaService.buscarPorId(id);
-        return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
+        return ResponseEntity.ok(new SuccessResponse<>(ReservaResponseDTO.fromEntity(reserva)));
     }
 
-    // NOVO ENDPOINT: SIMULAÇÃO DE PAGAMENTO (Recebe o valor no corpo)
-    @PatchMapping("/{id}/pagar")
-    public ResponseEntity<ReservaResponseDTO> simularPagamento(@PathVariable Long id,
-                                                               @RequestBody @Valid PagamentoRequestDTO dto) {
-        Reserva reserva = reservaService.simularPagamento(id, dto.getValor());
-        return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
+    @PatchMapping("/{id}/pagamentos")
+    public ResponseEntity<SuccessResponse<ReservaResponseDTO>> simularPagamento(@PathVariable Long id, @RequestBody @Valid PagamentoRequestDTO dto) {
+        Reserva reserva = reservaService.simularPagamento(id, dto.valor());
+        return ResponseEntity.ok(new SuccessResponse<>(ReservaResponseDTO.fromEntity(reserva)));
     }
 
-    // CANCELAR RESERVA (MÉTODO HTTP: DELETE)
     @DeleteMapping("/{id}/cancelar")
     public ResponseEntity<Void> cancelarReserva(@PathVariable Long id) {
         reservaService.cancelarReserva(id);
         return ResponseEntity.noContent().build();
     }
 
-    // CHECK-IN (MÉTODO HTTP: PATCH)
     @PatchMapping("/{id}/checkin")
-    public ResponseEntity<ReservaResponseDTO> realizarCheckin(@PathVariable Long id) {
+    public ResponseEntity<SuccessResponse<ReservaResponseDTO>> realizarCheckin(@PathVariable Long id) {
         Reserva reserva = reservaService.realizarCheckin(id);
-        return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
+        return ResponseEntity.ok(new SuccessResponse<>(ReservaResponseDTO.fromEntity(reserva)));
     }
 
-    // CHECK-OUT (MÉTODO HTTP: PATCH)
     @PatchMapping("/{id}/checkout")
-    public ResponseEntity<ReservaResponseDTO> realizarCheckout(@PathVariable Long id) {
+    public ResponseEntity<SuccessResponse<ReservaResponseDTO>> realizarCheckout(@PathVariable Long id) {
         Reserva reserva = reservaService.realizarCheckout(id);
-        return ResponseEntity.ok(ReservaResponseDTO.fromEntity(reserva));
+        return ResponseEntity.ok(new SuccessResponse<>(ReservaResponseDTO.fromEntity(reserva)));
     }
 
-    // ENDPOINT DE BUSCA POR CLIENTE
     @GetMapping("/{clienteId}/clientes")
-    public ResponseEntity<List<ReservaResponseDTO>> listarReservasPorCliente(@PathVariable Long clienteId) {
+    public ResponseEntity<SuccessResponse<List<ReservaResponseDTO>>> listarReservasPorCliente(@PathVariable Long clienteId) {
         List<ReservaResponseDTO> dtos = reservaService.buscarReservasPorCliente(clienteId)
                 .stream()
                 .map(ReservaResponseDTO::fromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
+                .toList();
+        return ResponseEntity.ok(new SuccessResponse<>(dtos));
     }
 }
