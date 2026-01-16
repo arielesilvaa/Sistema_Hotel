@@ -28,7 +28,6 @@ public class Reserva {
     private LocalDateTime dataCheckin;
     private LocalDateTime dataCheckout;
 
-    // NOVO CAMPO ADICIONADO: Necessário para o método simularPagamento
     private LocalDateTime dataHoraPagamento;
 
     private LocalDateTime dataHoraEntrada;
@@ -43,6 +42,4 @@ public class Reserva {
     private BigDecimal valorDiaria;
     private BigDecimal valorTaxaServico;
     private BigDecimal valorTotal;
-
-    // Construtores, toString (Se estiver usando Lombok, @Getter/@Setter resolvem)
 }

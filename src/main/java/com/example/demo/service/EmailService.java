@@ -7,4 +7,3 @@ public interface EmailService {
 }
 
 
-//ele não retorna nada mas é responsavel por enviar email quando uma reserva é feita

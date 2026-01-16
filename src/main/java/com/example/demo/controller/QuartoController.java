@@ -60,3 +60,4 @@ public class QuartoController {
     @Setter @Getter
     public static class ValorRequest { private BigDecimal novoValor; }
 }
+

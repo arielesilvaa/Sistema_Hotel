@@ -11,34 +11,33 @@ import java.time.LocalDateTime;
 
 @Setter
 @Getter
-@Entity // Indica que esta classe é uma entidade JPA
-@Table(name = "pagamentos") // Mapeia a entidade para a tabela "pagamentos"
+@Entity
+@Table(name = "pagamentos")
 public class Pagamento extends BaseEntity {
 
-    // getters e setters
-    @ManyToOne(optional = false, fetch = FetchType.LAZY) // Muitos pagamentos para uma reserva
-    //optional = false: pagamento sempre tem que ter uma reserva ligada
-    //fetch = FetchType.LAZY: Diz ao JPA para não carregar a reserva inteira automaticamente pagamentos Isso economiza memória e tempo.
-    @JoinColumn(name = "reserva_id", nullable = false) // Chave estrangeira para a tabela reservas não pode ser nula
-    @JsonIgnore // para não incluir os dados da Reserva quando você pedir um Pagamento erro de recursão.
-    private Reserva reserva; // Reserva associada ao pagamento
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
 
-    @Enumerated(EnumType.STRING) // Armazena o enum como string no banco de dados
-    @Column(nullable = false) // Tipo de pagamento não pode ser nulo
-    private TipoPagamento tipo; // Tipo de pagamento (ex: CARTAO_CREDITO, DINHEIRO)
+    @JoinColumn(name = "reserva_id", nullable = false)
+    @JsonIgnore
+    private Reserva reserva;
 
-    @Column(nullable = false) // Valor pago não pode ser nulo
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoPagamento tipo;
+
+    @Column(nullable = false)
     private BigDecimal valorPago;
 
-    private LocalDateTime dataPagamento; // Data e hora do pagamento
+    private LocalDateTime dataPagamento;
 
-    public Pagamento() {} // Construtor padrão
+    public Pagamento() {
+    }
 
     public Pagamento(Reserva reserva, TipoPagamento tipo, BigDecimal valorPago, LocalDateTime dataPagamento) {
         this.reserva = reserva;
         this.tipo = tipo;
         this.valorPago = valorPago;
         this.dataPagamento = dataPagamento;
-    } // Construtor completo
+    }
 
 }

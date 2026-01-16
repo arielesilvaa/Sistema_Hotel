@@ -49,3 +49,26 @@ public record ReservaResponseDTO (
         );
     }
 }
+
+    /*
+      (@JsonFormat): O código pega as datas brutas do Java e as "formata" em um padrão universal
+
+     fromEntity: Ele funciona como uma ponte de tradução.
+
+     Ele recebe uma Reserva completa que veio do banco de dados.
+
+     Veja que ele faz várias checagens como reserva.getCliente() != null ? ....
+     Isso é para o código não "quebrar" se uma reserva estiver sem cliente ou sem quarto. ,
+     Ele tenta pegar o ID e, se não encontrar, coloca um null no lugar de forma segura.
+     Ele "extrai" apenas os IDs e os valores e joga para dentro do construtor do ReservaResponseDTO.
+
+
+     Resumo da "Conexão" Técnica:
+    Entrada: Recebe a Entidade Reserva (cheia de conexões complexas com o banco).
+
+    Ação: Filtra os dados, formata as datas e resolve as pendências de valores nulos (Null-safe).
+
+    Saída: Entrega um JSON enxuto, fácil de ler e pronto para ser exibido na tela do usuário.
+
+
+     */
