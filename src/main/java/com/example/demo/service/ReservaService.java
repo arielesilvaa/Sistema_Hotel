@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -41,7 +40,7 @@ public class ReservaService {
                 .orElseThrow(() -> new NotFoundException("Reserva não encontrada."));
     }
 
-    @Transactional // garante que todas as operações dentro do método sejam trat
+    @Transactional
     public Reserva criarReserva(Long clienteId, Long quartoId, LocalDateTime dataCheckin, LocalDateTime dataCheckout, TipoPagamento tipoPagamento) {
 
         Cliente cliente = clienteRepository.findById(clienteId)
@@ -97,7 +96,6 @@ public class ReservaService {
         return reservaRepository.save(novaReserva);
     }
 
-
     public Reserva simularPagamento(Long reservaId, BigDecimal valorPago) {
         Reserva reserva = buscarPorId(reservaId);
 
@@ -105,7 +103,6 @@ public class ReservaService {
             throw new InvalidStatusException("Pagamento só pode ser processado para reservas com status ABERTA.");
         }
 
-        // Simulação de verificação de valor
         if (valorPago.compareTo(reserva.getValorTotal()) < 0) {
             throw new InvalidDataException("O valor pago é insuficiente para cobrir o total da reserva.");
         }
@@ -139,14 +136,13 @@ public class ReservaService {
         if (reserva.getStatus() != StatusReserva.PAGA) {
             throw new InvalidStatusException("Check-in só pode ser realizado em reservas com status PAGA.");
         }
-        // Bloco de validação de datas
-        // Verifica se a data atual está dentro do período permitido para check-in
+
         if (agora.isBefore(reserva.getDataCheckin())) {
             throw new InvalidDataException("Check-in antecipado não permitido.");
         }
         if (agora.isAfter(reserva.getDataCheckout())) {
             throw new InvalidDataException("Check-in não permitido. A data de check-out já foi atingida.");
-        } // Fim do bloco de validação
+        }
 
         reserva.setStatus(StatusReserva.CHECKIN);
         reserva.setDataHoraEntrada(agora);

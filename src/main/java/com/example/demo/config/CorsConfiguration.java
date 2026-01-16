@@ -4,8 +4,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-//
-@Configuration
+// esse arquivo é para configurar o CORS globalmente na aplicação
+@Configuration // Anotação para indicar que esta classe é uma configuração do Spring
 public class CorsConfiguration implements WebMvcConfigurer {
 
     @Override // Configurações de CORS

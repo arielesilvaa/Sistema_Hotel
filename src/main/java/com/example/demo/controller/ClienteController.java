@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.APIResponse;
 import com.example.demo.dto.SuccessResponse;
 import com.example.demo.model.Cliente;
 import com.example.demo.service.ClienteService;
@@ -9,7 +8,6 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -55,3 +53,5 @@ public class ClienteController {
         return ResponseEntity.noContent().build();
     }
 }
+
+

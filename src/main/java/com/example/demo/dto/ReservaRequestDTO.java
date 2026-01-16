@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public record ReservaRequestDTO (
 
     // Getters e Setters
-    @NotNull(message = "O ID do cliente é obrigatório.")
+    @NotNull(message = "O ID do cliente é obrigatório.") // Anotação para validação de campo obrigatório
     Long clienteId,
 
     @NotNull(message = "O ID do quarto é obrigatório.")
@@ -21,7 +21,7 @@ public record ReservaRequestDTO (
     LocalDateTime dataCheckin,
 
     @NotNull(message = "A data de check-out é obrigatória.")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") // Formato esperado para data e hora
     LocalDateTime dataCheckout,
 
     @NotNull(message = "O tipo de pagamento é obrigatório.")

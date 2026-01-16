@@ -39,7 +39,6 @@ public class ReservaController {
         resource.add(linkTo(methodOn(ReservaController.class).simularPagamento(reservaCriada.getId(), null)).withRel("pagar"));
         resource.add(linkTo(methodOn(ReservaController.class).cancelarReserva(reservaCriada.getId())).withRel("cancelar"));
 
-        // Retorna APENAS o campo "data" no JSON de sucesso
         return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResponse<>(resource));
     }
 
@@ -82,3 +81,4 @@ public class ReservaController {
         return ResponseEntity.ok(new SuccessResponse<>(dtos));
     }
 }
+
